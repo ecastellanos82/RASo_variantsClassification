@@ -1,6 +1,7 @@
 
+######## INSTALLATION ALL PACKAGES AND CONNECTIONS
 
-##Pandora
+## Install packages to connect to Pandora
 #install.packages("RPostgreSQL")
 require("RPostgreSQL")
 drv <- dbDriver("PostgreSQL")  # loads the PostgreSQL driver
@@ -8,7 +9,7 @@ drv <- dbDriver("PostgreSQL")  # loads the PostgreSQL driver
 con <- dbConnect(drv, dbname = "ngsdiagnostics", host = "172.19.26.99", port = 5432, user = "pandora", password =  "oreo no more")
 
 
-##UCSC
+## Install packages to connect to UCSC
 #install.packages("RMySQL")
 library(RMySQL)
 my_connection <- dbConnect(
@@ -22,18 +23,16 @@ my_connection <- dbConnect(
 #install.packages("stringr")
 require(stringr)
 
-### creem la funció myFunction
+## Stablished criteria are different depending on GOF genes and LOF genes. BP1 % PVS1 criteria are only applicable to NF1 and SPRED1 genes (LOF genes)
+
+
 ##gens possibles : BRAF, CBL, HRAS, KRAS, LZTR1, NF1, NRAS, MAP2K1, MAP2K2, PTPN11, RAF1, RIT1, SHOC2, SOS1, SOS2, SPRED1 i RASA1,
 
-myFunction<- function(id){
+Automatic_criteria_AMCG<- function(id){
   #fem un dataframe on cada linia es un criteri
   criteris<-data.frame(criteris=c(rep(NA, 37)), row.names = c("PS1", "PS2_veryStrong", "PS2", "PS3", "PS4_strong", "PS4_moderate", "PS4_supporting", "PM5_strong",  "PM6_veryStrong", "PM6","PM1", "PM2", "PM4",  "PP1_strong", "PP1_moderate", "PP1_supporting", "PP2", "PP3","PP5", "BA1", "BS1", "BS2", "BS3", "BS4", "BP1", "BP2", "BP3", "BP4", "BP5", "BP6", "BP7", "BS1_supporting", "PM6_strong", "PM5", "PM5_supporting", "BP8", "PVS1"))
-  #establim els dominis per grups
-  domini_grup2<-data.frame(row.names<-c("RBD1", "RBD2"),BRAF.start=c(157,201), BRAF.end=c(200,261), RAF1.start=c(58,105), RAF1.end=c(101,185), row.names=T)
-  domini_grup3<-data.frame(row.names<-c("Effector region", "GTP", "GTP1", "GTP2"),HRAS.start=c(32,10,57,116), HRAS.end=c(40,17,61,119), KRAS.start=c(32,10,59,116), KRAS.end=c(38,18,60,119),NRAS.start=c(0,10,57,116), NRAS.end=c(0,18,61,119),row.names=T)
-  domini_grup4<-data.frame(row.names<-c("NES", "Negative regulatory region", "P-loop", "ATP binding","Catalytic loop", "Activation loop", "Protein rich domain", "Versatile docking"),MAP2K1.start=c(32,44,74,143,192,208,262,362), MAP2K1.end=c(44,51,82,146,195,233,307,396), MAP2K2.start=c(36,48,78,147,196,212,266,370), MAP2K2.end=c(48,55,96,150,199,237,311,400), row.names=T)
-  domini_grup5<-data.frame(row.names<-c("DH", "PH", "N-terminal Ras-GEF", "Ras-GEF"),SOS1.start=c(200,444,597,780), SOS1.end=c(390,548,741,1019), SOS2.start=c(198,442,595,778), SOS2.end=c(388,546,739,1017), row.names=T)
-  
+
+
   posicio_grup<-NULL
   num<-NULL
   ###bp1 i pvs1 (només SPRED1 i NF1)
@@ -45,10 +44,10 @@ myFunction<- function(id){
                   ON c."uniqueVariantId"=b."uniqueVariantId"
                   LEFT OUTER JOIN "Genes" AS d
                   ON c."transcriptId"=d."mainTranscriptId"
-                  WHERE a."uniqueVariantId"=', id, 'AND a."isMainTranscript"=\'TRUE\' AND d."symbol"<> \'NA\' ORDER BY a."date" DESC LIMIT 1') #obtenim les coordenades, el cromosoma, l'efecte i el gen de la nostra variant. 
+                  WHERE a."uniqueVariantId"=', id, 'AND a."isMainTranscript"=\'TRUE\' AND d."symbol"<> \'NA\' ORDER BY a."date" DESC LIMIT 1') #obtenim les coordenades, el cromosoma, l'efecte i el gen de la nostra variant.
   bp1<-dbGetQuery(con, bp1.1)
   gen<-bp1[1,"symbol"]
-  
+
   if (!is.na(bp1$validatedEffect)){
     #criteris["BP1",1][(bp1[1,"symbol"]=="NF1"|bp1[1,"symbol"]=="SPRED1")&bp1[1,"validatedEffect"]=="missense (non-synonymous)"]<-1 #si el gen es NF1 o SPRED1 i és una missense, s'assigna el valor 1 a la matriu criteris BP1
     #criteris["BP1",1][(bp1[1,"symbol"]=="NF1"|bp1[1,"symbol"]=="SPRED1")&bp1[1,"validatedEffect"]!="missense (non-synonymous)"]<-0#si el gen es NF1 o SPRED1 i no  ?s una missense, s'assigna el valor 0 a la matriu criteris BP1
@@ -56,9 +55,9 @@ myFunction<- function(id){
     criteris["BP1",1][(bp1[1,"symbol"]=="NF1"|bp1[1,"symbol"]=="SPRED1")&(bp1[1,"validatedEffect"]=="nonsense (stop gain)"|bp1[1,"validatedEffect"]=="nonsense/splice"|bp1[1,"validatedEffect"]=="frameshift")]<-0 #si no ?s NF1 o SPRED1, i es una trucating variant s'assigna un 1.
     criteris["BP1",1][bp1[1,"validatedEffect"]=="missense (non-synonymous)"]<-0 #si es una missense s'assigna un 0
     criteris["PVS1",1][(bp1[1,"symbol"]=="NF1"|bp1[1,"symbol"]=="SPRED1")&(bp1[1,"validatedEffect"]=="nonsense (stop gain)"|bp1[1,"validatedEffect"]=="nonsense/splice"|bp1[1,"validatedEffect"]=="stopgain"|bp1[1,"validatedEffect"]=="frameshift")]<-1 #si no ?s NF1 o SPRED1, i es una trucating variant s'assigna un 1.
-    
+
   }
-  
+
   if (is.na(bp1$validatedEffect)){
     #criteris["BP1",1][(bp1[1,"symbol"]=="NF1"|bp1[1,"symbol"]=="SPRED1")&bp1[1,"effect"]=="nonsynonymous SNV"]<-1 #si el gen es NF1 o SPRED1 i és una missense, s'assigna el valor 1 a la matriu criteris BP1
     #criteris["BP1",1][(bp1[1,"symbol"]=="NF1"|bp1[1,"symbol"]=="SPRED1")&bp1[1,"effect"]!="nonsynonymous SNV"]<-0#si el gen es NF1 o SPRED1 i no  ?s una missense, s'assigna el valor 0 a la matriu criteris BP1
@@ -66,17 +65,17 @@ myFunction<- function(id){
     criteris["BP1",1][(bp1[1,"symbol"]=="NF1"|bp1[1,"symbol"]=="SPRED1")&(bp1[1,"effect"]=="stopgain"|bp1[1,"effect"]=="stoploss"|bp1[1,"effect"]=="frameshift deletion")]<-0
     criteris["BP1",1][bp1[1,"effect"]=="nonsynonymous SNV"]<-0 #si es una missense s'assigna un 0
     criteris["PVS1",1][(bp1[1,"symbol"]=="NF1"|bp1[1,"symbol"]=="SPRED1")&(bp1[1,"effect"]=="stopgain"|bp1[1,"effect"]=="stoploss"|bp1[1,"effect"]=="frameshift deletion")]<-1
-    
+
   }
-  
+
   criteris["PVS1",1][is.na(criteris["PVS1",1])]<-0 #assignem 0 a PVS1 si no s'ha complert cap de les condicions anteriors
-  
-  
+
+
   ###ps1
   ps1_aa<-paste('SELECT "cDNAAnnotation", "proteinAnnotation", "transcriptId"
         FROM "VA_VariantsInTranscripts"
         WHERE "isMainTranscript"=\'TRUE\' AND "uniqueVariantId"=', id, 'ORDER BY date DESC LIMIT 1')
-  ps1_a<-dbGetQuery(con, ps1_aa) 
+  ps1_a<-dbGetQuery(con, ps1_aa)
   cdna<-unlist(strsplit(ps1_a$cDNAAnnotation,">")) #separa la cadena de text quan troba >
   cdna<-paste(cdna[1], "%", sep="") #afegeix % al primer element de la cadena, per tal de que cerqui qualsevol patró que comenci com cdna[1] seguit del que sigui
   join_ps1<- paste('SELECT  "VA_VariantsInTranscripts"."uniqueVariantId", "cDNAAnnotation", "proteinAnnotation", "transcriptId",  "VA_CustomClassification"."date", "classification"
@@ -86,9 +85,9 @@ myFunction<- function(id){
   WHERE "VA_VariantsInTranscripts"."transcriptId"=',ps1_a$transcriptId,'AND "VA_VariantsInTranscripts"."cDNAAnnotation" LIKE \'',cdna,'\' AND "VA_VariantsInTranscripts"."proteinAnnotation"=\'', ps1_a$proteinAnnotation, '\'AND "VA_VariantsInTranscripts"."isMainTranscript"=\'TRUE\' AND "VA_VariantsInTranscripts"."uniqueVariantId" <>', id,'', sep="")
   ps1.1<-dbGetQuery(con, join_ps1)
   ps1<-sum(ps1.1$classification=="pat") #compta les files que contenen la paraula pat de les variants sinònimes
-  criteris["PS1", 1][ps1>=1]<-1 
+  criteris["PS1", 1][ps1>=1]<-1
   transcripts_id<-data.frame(posicio=c(283,181,229,67,30,34,240,7,7),posicio2=c(rep(NA,6),235,240,235), row.names = c("SOS1", "SOS2", "MAP2K1", "MAP2K2", "BRAF", "RAF1","HRAS","NRAS","KRAS"))
-  
+
   if (gen=="SOS1"|gen=="SOS2"|gen=="BRAF"|gen=="RAF1"|gen=="MAP2K1"|gen=="MAP2K2"|gen=="HRAS"|gen=="NRAS"|gen=="KRAS"){
     if (ps1==0 & !is.na(ps1_a$proteinAnnotation)&!is.na(bp1[1,"effect"])&(bp1[1,"effect"]!="synonymous SNV"|bp1[1,"effect"]=="nonsynonymous SNV")){
       prot<-unlist(strsplit(ps1_a$proteinAnnotation,"p.")) #es separa pel p.
@@ -102,13 +101,13 @@ myFunction<- function(id){
         posicio_relativa<-num-domini_funcional$SOS1.start #establim la posicio relavtiva dins daquell domini
         posicio_grup<-posicio_relativa+domini_funcional$SOS2.start #mirem a quina posicio equival de l'altre domini
       }
-      
+
       if (gen=="SOS2"){
         domini_funcional<-domini_grup5[num>=domini_grup5$SOS2.start&num<=domini_grup5$SOS2.end,]
         posicio_relativa<-num-domini_funcional$SOS2.start
         posicio_grup<-posicio_relativa+domini_funcional$SOS1.start
       }
-      
+
       if(gen=="BRAF"){
         domini_funcional<-domini_grup2[num>=domini_grup2$BRAF.start&num<=domini_grup2$BRAF.end,]
         posicio_relativa<-num-domini_funcional$BRAF.start
@@ -123,8 +122,8 @@ myFunction<- function(id){
         domini_funcional<-domini_grup4[num>=domini_grup4$MAP2K1.start&num<=domini_grup4$MAP2K1.end,]
         posicio_relativa<-num-domini_funcional$MAP2K1.start
         posicio_grup<-posicio_relativa+domini_funcional$MAP2K2.start}
-      
-      
+
+
       if (gen=="MAP2K2"){
         domini_funcional<-domini_grup4[num>=domini_grup4$MAP2K2.start&num<=domini_grup4$MAP2K2.end,]
         posicio_relativa<-num-domini_funcional$MAP2K2.start
@@ -156,7 +155,7 @@ myFunction<- function(id){
           if (domini_funcional$NRAS.start!=0){
             posicio_grup<-c(posicio_relativa+domini_funcional$HRAS.start,posicio_relativa+domini_funcional$NRAS.start )
           }}}
-      
+
       if(length(posicio_grup)!=0){
         posicio_grup2<-paste("p.",primer_aa, posicio_grup, aa_canvi, sep="")
         join_ps1<- paste('SELECT  "VA_VariantsInTranscripts"."uniqueVariantId", "cDNAAnnotation", "proteinAnnotation", "transcriptId",  "VA_CustomClassification"."date", "classification"
@@ -180,14 +179,14 @@ myFunction<- function(id){
         }
       }
     }}
-  
-  
+
+
   criteris["PS1", 1][is.na(criteris["PS1", 1])]<-0 #assignem 0 si no es pat o ppat cap dels anteriors.
-  
-  
-  
+
+
+
   ###pm5 i bp8
-  pm5<-0  
+  pm5<-0
   bp8<-0
   join_pm5<- paste('SELECT  "VA_VariantsInTranscripts"."uniqueVariantId", "cDNAAnnotation", "proteinAnnotation", "transcriptId",  "VA_CustomClassification"."date", "classification", "effect"
   FROM "VA_VariantsInTranscripts"
@@ -206,7 +205,7 @@ myFunction<- function(id){
                    LEFT OUTER JOIN "VA_CustomClassification"
                    ON "VA_VariantsInTranscripts"."uniqueVariantId"="VA_CustomClassification"."uniqueVariantId"
                    WHERE "VA_VariantsInTranscripts"."transcriptId"=', ps1_a$transcriptId,'AND "VA_VariantsInTranscripts"."proteinAnnotation" LIKE ',prot_cerca,'AND "VA_VariantsInTranscripts"."uniqueVariantId" <>', id,'', sep="")
-        
+
         pm5.1b<-dbGetQuery(con, join_pm5b)
         duplicatsb<-duplicated(pm5.1b$uniqueVariantId)
         pm5.2b<-NULL
@@ -221,7 +220,7 @@ myFunction<- function(id){
               pm5.2b$classification[pm5.2b$uniqueVariantId==pm5.1b$uniqueVariantId[i]]<-pm5.1b$classification[i]
             }}
         }
-        
+
         pm5<-sum(pm5.2b$classification=="pat", pm5.2b$classification=="ppat")
         pm5[is.na(pm5)]<-0
         bp8<-sum(pm5.2b$classification=="pol", pm5.2b$classification=="ppol")
@@ -229,8 +228,8 @@ myFunction<- function(id){
   # valor_unic<-unique(pm5.1$uniqueVariantId)
   pm5.2<-NULL
   duplicats<-duplicated(pm5.1$uniqueVariantId)
-  
-  
+
+
   for (i in 1:nrow(pm5.1)){ #eliminem les entrades duplicades
     if (nrow(pm5.1>0)){
       if (duplicats[i]==FALSE){
@@ -242,15 +241,15 @@ myFunction<- function(id){
         pm5.2$classification[pm5.2$uniqueVariantId==pm5.1$uniqueVariantId[i]]<-pm5.1$classification[i]
       }}
   }
-  
-  
+
+
   pm5<-sum(pm5,pm5.2$classification=="pat",pm5.2$classification=="ppat")#compta les files que són pat/ppat que tenen aminoacid diferent
   bp8<-sum(bp8,pm5.2$classification=="pol",pm5.2$classification=="ppol")#compta les files que són pol/ppol que tenen aminoacid diferent
   criteris[c("PM5_strong","PM5", "PM5_supporting"), 1][pm5>=2]<-c(1,0,0) #si alguna fila es pat li assigna 1 a la matriu de criteris fila pm5
   criteris[c("PM5_strong","PM5", "PM5_supporting"), 1][pm5==1]<-c(0,1,0)
   criteris[c("PM5_strong","PM5"), 1][pm5==0]<-c(0,0)
   criteris["BP8", 1][bp8>=1]<-1
-  
+
   if(length(posicio_grup)!=0&pm5==0){
     posicio_grup2<-paste("p.",primer_aa, posicio_grup,"_", sep="")
     join_pm5<- paste('SELECT  "VA_VariantsInTranscripts"."uniqueVariantId", "cDNAAnnotation", "proteinAnnotation", "transcriptId",  "VA_CustomClassification"."date", "classification", "effect"
@@ -276,14 +275,14 @@ myFunction<- function(id){
       bp8<-sum(pm5_grups_analegs$classification=="pol"|pm5_grups_analegs$classification=="ppol")
     }
   }
-  
-  
-  
-  
+
+
+
+
   pm5[is.null(pm5)]<-0
   criteris["PM5_supporting", 1][pm5==0]<-0 #si no hi ha cap fila no es compleix
   criteris["BP8", 1][is.na(criteris["BP8", 1])]<-0
-  
+
   ##pm1
   BRAF<-c(238:286,439:474,531,459:474,594:627)
   HRAS<-c(12,13,14,58,59,60,61,62,63)
@@ -308,14 +307,14 @@ myFunction<- function(id){
         sep<-unlist(strsplit(proti, "_"))
         num<-sep[1]
       }
-      
+
     }
     else{ #si es una frameshift
       num<-as.integer(str_sub(proti,2,str_length(proti)-2))
     }
   }
-  
-  
+
+
   hot_spots<-list(BRAF,HRAS, KRAS,MAP2K1,MAP2K2, PTPN11, RAF1,SHOC2, SOS1,SPRED1, NF1)
   names(hot_spots)<-c("BRAF", "HRAS", "KRAS", "MAP2K1", "MAP2K2", "PTPN11", "RAF1", "SHOC2", "SOS1", "SPRED1", "NF1")
   suma<-0
@@ -325,8 +324,8 @@ myFunction<- function(id){
   }
   criteris["PM1",1][suma==1]<-1 #assignem 1 si és pat o ppat
   criteris["PM1",1][suma==0|is.na(suma)]<-0
-  
-  
+
+
   ##BA1 , BS1 i PM2
   freq<-paste('SELECT "PopFreqMax" FROM "VA_Frequencies" WHERE "uniqueVariantId"=', id,'ORDER BY "date" DESC LIMIT 1') #agafem la informaci? de frequencia m?s actualitzada de la variant d'interes
   BA1<- dbGetQuery(con, freq)
@@ -337,9 +336,9 @@ myFunction<- function(id){
   criteris["BS1_supporting",1][!is.na(BA1)]<-0
   criteris["PM2", 1][BA1==0|is.na(BA1)]<-1
   criteris["PM2", 1][BA1!=0&!is.na(BA1)]<-0
-  
+
   ##pm4 i bp3
-  
+
   criteris["PM4", 1][gen!="NF1"|gen!="SPRED1"]<-0
   criteris["BP3", 1][gen!="NF1"|gen!="SPRED1"]<-0
   if (gen=="NF1"|gen=="SPRED1"){
@@ -371,9 +370,9 @@ myFunction<- function(id){
       criteris["BP3", 1][pm4$validatedEffect %in% "in frame" & is.null (resultat)]<-0#si cont? in frame el resulat i no  hi ha cap resultat (no esta en regio repetitiva) assiga un 0 a BP3
     }
   }
-  
+
   ##PP2
-  
+
   pp2.1<- paste('SELECT "effect","validatedEffect"
               FROM "VA_VariantsInTranscripts"
                LEFT OUTER JOIN "VA_VariantNomenclature"
@@ -383,7 +382,7 @@ myFunction<- function(id){
   efecte_validat<-pp2$validatedEffect[!is.na(pp2$validatedEffect)]
   efecte_novalidat<-pp2$effect[!is.na(pp2$effect)]
   #criteris["PP2",1][gen=="NF1"|gen=="SPRED1"]<-0 #si els gens son NF1 o SPRED1 ja assigna 0 a PP2
-  #if(gen!="NF1"& gen!="SPRED1"){ 
+  #if(gen!="NF1"& gen!="SPRED1"){
   criteris["PP2",1][length(efecte_validat)==0&length(efecte_novalidat)==0]<-0
   if( length(efecte_validat)>0){
     if(efecte_validat[1]=="missense (non-synonymous)"){
@@ -399,13 +398,13 @@ myFunction<- function(id){
     if(efecte_novalidat[1]!="nonsynonymous SNV"){
       criteris["PP2", 1]<-0
     }}
-  
-  #} 
-  
-  
+
+  #}
+
+
   #pp3 i bp4
-  
-  pp3.1<- paste('SELECT "SIFT_pred", "Polyphen2_HVAR_pred","MutationTaster_pred","PROVEAN_pred", "CADD_phred" 
+
+  pp3.1<- paste('SELECT "SIFT_pred", "Polyphen2_HVAR_pred","MutationTaster_pred","PROVEAN_pred", "CADD_phred"
               FROM "VA_VariantsInTranscripts"
                LEFT OUTER JOIN "VA_InSilicoPathogenicity" AS a
                ON "VA_VariantsInTranscripts"."uniqueVariantId"= a."uniqueVariantId"
@@ -424,8 +423,8 @@ myFunction<- function(id){
   criteris["PP3",1][taula["D"]<=4|taula["N"]==5]<-0
   criteris["BP4",1][taula["N"]==5]<-1
   criteris["BP4",1][taula["N"]<=4|taula["D"]==5]<-0
-  
-  
+
+
   #bs2, ps4
   bs2.1<-paste('SELECT "pedigreeProgenyId", "startDate",f."name"
   FROM "UniqueVariants" AS a
@@ -443,7 +442,7 @@ myFunction<- function(id){
   bs2<-dbGetQuery(con, bs2.1)
   independent_control<-sum(bs2$name!="NF1_SPRED1"&bs2$name!="Rasopathies"|is.na(bs2$name))
   independent_afectats<-sum(bs2$name=="NF1_SPRED1"&!is.na(bs2$name)|bs2$name=="Rasopathies"&!is.na(bs2$name))
-  
+
   criteris[c("BS2","PS4_strong", "PS4_moderate", "PS4_supporting"),1][independent_control>=3]<-c(1,0,0,0)
   criteris[c("PS4_strong", "PS4_moderate", "PS4_supporting"),1][independent_afectats==0]<-c(0,0,0)
   if (independent_control==0){
@@ -456,8 +455,8 @@ myFunction<- function(id){
     print (paste("bs2: S'han trobat", independent_control, "individus sans amb la variant"))
     print (paste("ps4: S'han trobat", independent_afectats, "individus afectes amb la variant"))
   }
-  
-  
+
+
   ##adaptacio pm2 i BS1
   criteris["PM2",1][criteris["PM2",1]==1&independent_control>100]<-0 #per molt que segons Pandora no estigui descrit en bases de dades poblacionals, si en la mostra de pandora hi ha més de 100 individus control amb la variant PM2 es considera 0
   inhousefreq<-paste('SELECT "freqs","inHouseFrequency","inHouseNumber" FROM "VA_InHouseFrequencies" WHERE "uniqueVariantId"=', id,'ORDER BY "date" DESC LIMIT 1') #agafem la informacio de frequencia m?s actualitzada de la variant d'interes
@@ -466,7 +465,7 @@ myFunction<- function(id){
     criteris["BS1",1][independent_control>=1000&inhouse$inHouseFrequency[1]>=0.30]<-1 #per molt que segons Pandora no estigui descrit en bases de dades poblacionals, si en la mostra de pandora hi ha més de 1000 individus control amb la variant i la frequencia inhouse es superior a 0.30 considerem 1 a BS1
     criteris["BS1_supporting",1][independent_control>500&independent_control<1000&inhouse$inHouseFrequency[1]>0.10&inhouse$inHouseFrequency[1]<0.30]<-1
     criteris["BS1_supporting",1][is.na(criteris["BS1_supporting",1])]<-0
-  } 
+  }
   return(criteris)
 }
 
@@ -476,7 +475,7 @@ criteris<-myFunction(id)
 ####CRITERIS MANUALS
 
 manual<-function(criteris){
-  
+
   #fem que ens pregunti els criteris manuals
   print(paste("En quantes de novo s'ha trobat?"))
   denovo<-as.integer(scan(n=1, what="integer"))
@@ -487,8 +486,8 @@ manual<-function(criteris){
   if (denovo==0){
     denovo_confirmats=c(0,0)
   }
-  
-  
+
+
   denovo_noconfirmats=denovo-denovo_confirmats[1]
   criteris["PS2_veryStrong",1][denovo_confirmats[1]<2|denovo_confirmats[2]<3]<-0
   criteris[c("PS2_veryStrong","PS2"),1][denovo_confirmats[1]>=2]<-c(1,0)
@@ -504,25 +503,25 @@ manual<-function(criteris){
   criteris["PM6_strong",1][denovo_noconfirmats!=2&denovo_noconfirmats!=3]<-0
   criteris["PM6",1][denovo_noconfirmats==1]<-1
   criteris["PM6",1][denovo_noconfirmats!=1]<-0
-  
-  
+
+
   print(paste("Hi ha cosegregació de la variant amb la malaltia? Indica els casos en que cosegrega"))
   cosegregacio<-as.integer(scan(n=1, what="integer"))
   criteris[c("PP1_strong", "PP1_moderate", "PP1_supporting"),1][cosegregacio>=7]<-c(1,0,0)
   criteris[c("PP1_strong", "PP1_moderate", "PP1_supporting"),1][cosegregacio==5|cosegregacio==6]<-c(0,1,0)
   criteris[c("PP1_strong", "PP1_moderate", "PP1_supporting"),1][cosegregacio==3|cosegregacio==4]<-c(0,0,1)
   criteris[c("PP1_strong", "PP1_moderate", "PP1_supporting"),1][cosegregacio<3]<-c(0,0,0)
-  
+
   print("Hi ha evidència en alguna base de dades fiable de que la variant és patogènica o benigne? Primer indica s'hi ha de patogènica, on 1 es que  n'hi ha i 0 si no n'hi ha i després el mateix però amb benigne")
   evidencia<-as.integer(scan(n=2, what="integer"))
   criteris[c("PP5", "BP6"),1]<-c(evidencia[1], evidencia[2])
-  
-  
+
+
   for(i in 1:nrow(criteris)){
     #si en aquellafila criteri es NA
     while(is.na(criteris[i,]))
     {
-      #ensenya a l'usuari quin criteri correspon 
+      #ensenya a l'usuari quin criteri correspon
       print(paste("compleix el criteri:",row.names(criteris)[i]))
       #demana que s'introdueixi
       input<-scan(n=1,what="integer")
@@ -534,7 +533,7 @@ manual<-function(criteris){
         criteris[i,]<-as.integer(input)}
     }
   }
-  
+
   return(criteris)
 }
 
@@ -544,9 +543,9 @@ criteris_manuals<-manual(criteris)
 
 classificacio_final<-function(criteris_manuals){
   suma_criteris<- data.frame(verystrong_pat=sum(criteris[2,1], criteris[9,1], criteris[37,1]),strong_pat=sum(criteris[1,1], criteris[3:5,1],criteris[8,1], criteris[33,1]),moderate_pat=sum(criteris[6,1],criteris[10:13,1],criteris[15,1],criteris[34,1]), supporting_pat=sum(criteris[16:19,1], criteris[7,1], criteris[35,1]), very_strong_benign=sum(criteris[20,1]), strong_benign=sum(criteris[21:24,1]), support_benign=sum(criteris[25:32,1],criteris[36,1]))
-  
+
   classificacio<- data.frame(pat=0, likely_pat=0, ben=0, likely_ben=0, vsd=0)
-  
+
   classificacio$pat[suma_criteris$verystrong_pat>=1&suma_criteris$strong_pat>=1|
                       suma_criteris$verystrong_pat>=1&suma_criteris$moderate_pat>=2|
                       suma_criteris$verystrong_pat>=1&suma_criteris$moderate_pat==1&suma_criteris$supporting_pat==1|
@@ -555,7 +554,7 @@ classificacio_final<-function(criteris_manuals){
                       suma_criteris$strong_pat==1&suma_criteris$moderate_pat>=3|
                       suma_criteris$strong_pat==1&suma_criteris$moderate_pat==2&suma_criteris$supporting_pat>=2|
                       suma_criteris$strong_pat==1&suma_criteris$moderate==1&suma_criteris$supporting_pat>=4]<-1
-  
+
   classificacio$likely_pat[suma_criteris$verystrong_pat==1&suma_criteris$moderate_pat==1|
                              suma_criteris$strong_pat==1&suma_criteris$moderate_pat==1|
                              suma_criteris$strong_pat==1&suma_criteris$moderate_pat==2|
@@ -563,16 +562,16 @@ classificacio_final<-function(criteris_manuals){
                              suma_criteris$moderate_pat>=3|
                              suma_criteris$moderate_pat==2&suma_criteris$supporting_pat>=2|
                              suma_criteris$moderate_pat==1&suma_criteris$supporting_pat>=4]<-1
-  
+
   classificacio$ben[suma_criteris$very_strong_benign==1|
                       suma_criteris$strong_benign>=2]<-1
-  
+
   classificacio$likely_ben[suma_criteris$strong_benign&suma_criteris$support_benign==1|
                              suma_criteris$support_benign>=2|
                              suma_criteris$strong_benign>=1&criteris["BS1",1]==1&suma_criteris$very_strong_benign==0&suma_criteris$supporting_pat==0&suma_criteris$moderate_pat==0&suma_criteris$strong_pat==0&suma_criteris$verystrong_pat==0]<-1
   classificacio$vsd[classificacio$pat==0&classificacio$likely_pat==0&classificacio$ben==0&classificacio$likely_ben==0|classificacio$pat==1&classificacio$ben==1|classificacio$pat==1&classificacio$likely_ben==1|classificacio$likely_pat==1&classificacio$ben==1|classificacio$likely_pat==1&classificacio$likely_ben==1]<-1
-  
-  
+
+
   if (classificacio$vsd==1){
     print("Variant de Significat Desconegut")
     print(suma_criteris)
@@ -593,7 +592,7 @@ classificacio_final<-function(criteris_manuals){
     if(classificacio$ben==0&classificacio$likely_ben==1){
       print ("Variant Probablement Benigne")
       print(suma_criteris)
-      
+
     }
   }
 }
