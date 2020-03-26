@@ -3,10 +3,24 @@
 ## Install packages to connect to Pandora
 #install.packages("RPostgreSQL")
 require("RPostgreSQL")
-drv <- dbDriver("PostgreSQL")  # loads the PostgreSQL driver
-#con <- dbConnect(drv, dbname = "ngsdiagnosticsdevel", host = "172.19.26.99", port = 5432, user = "pandora", password =  "oreo no more")
-con <- dbConnect(drv, dbname = "ngsdiagnostics", host = "172.19.26.99", port = 5432, user = "pandora", password =  "oreo no more")
 
+## connects to the NGS BD using a config file
+db_connect_postgres <- function(db_conf) {
+    drv <- dbDriver("PostgreSQL")
+
+    db_conf <- get_db_parameters(db_conf)
+    
+    con <- dbConnect(drv,
+                     user = db_conf[['user']],
+                     password = db_conf[['password']],
+                     dbname = db_conf[['dbname']],
+                     host = db_conf[['host']],
+                     port = db_conf[['port']])
+    
+    return(con)
+}
+
+con <- db_connect_postgres('db_pandora.conf')
 
 ## Install packages to connect to UCSC
 #install.packages("RMySQL")
