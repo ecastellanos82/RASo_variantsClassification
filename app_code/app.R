@@ -26,7 +26,7 @@ ui <- fluidPage(
                    label = "Specify variant iD in Pandora",
                    value = NA, min = 0)
    ), 
-   
+##example, to delete
    sidebarLayout(
       sidebarPanel(
       
@@ -44,9 +44,10 @@ ui <- fluidPage(
    )
 ))
 
-# Define server logic required to draw a histogram
+# Define server logic required to connect to DB and run all functions to classifiy RASopathy variant
 server <- function(input, output) {
    
+  ## conection to UCSC
       my_connection <- dbConnect(
         MySQL(),
         user="genome",
@@ -54,6 +55,39 @@ server <- function(input, output) {
         host="genome-euro-mysql.soe.ucsc.edu",
         port=3306
       )
+    
+  ## connection to Pandora DB
+      get_db_parameters <- function(db_conf) {
+        params <- read.table("~/GitHub/RASo_variantsClassification/params.csv", sep = ",", stringsAsFactors = FALSE)
+        return(list(user = params$V2[1],
+                    password = params$V2[2],
+                    dbname = params$V2[3],
+                    host = params$V2[4],
+                    port = params$V2[5]))
+      }
+      
+      ## connects to the NGS BD using a config file
+      ## param db_conf: a full path to a config file (CSV)
+      
+      
+      db_connect_postgres <- function(db_conf) {
+        drv <- dbDriver("PostgreSQL")
+        
+        db_conf <- get_db_parameters(db_conf)
+        
+        con <- dbConnect(drv,
+                         user = db_conf[['user']],
+                         password = db_conf[['password']],
+                         dbname = db_conf[['dbname']],
+                         host = db_conf[['host']],
+                         port = db_conf[['port']])
+        
+        return(con)
+      }
+      
+      con <- db_connect_postgres('db_pandora.conf')
+      
+      ###outputs examples
       
       output$tbl <- renderTable({
       conn <- dbConnect(
