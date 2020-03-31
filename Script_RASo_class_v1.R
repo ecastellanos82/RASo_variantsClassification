@@ -4,7 +4,20 @@
 #install.packages("RPostgreSQL")
 require("RPostgreSQL")
 
+## reads a BD config file
+## param db_conf: a full path to a config file (CSV)
+get_db_parameters <- function(db_conf) {
+    params <- read.table(conf, sep = ",", stringsAsFactors = FALSE)
+    return(list(user = params$V2[1],
+                password = params$V2[2],
+                dbname = params$V2[3],
+                host = params$V2[4],
+                port = params$V2[5]))
+}
+
+
 ## connects to the NGS BD using a config file
+## param db_conf: a full path to a config file (CSV)
 db_connect_postgres <- function(db_conf) {
     drv <- dbDriver("PostgreSQL")
 
