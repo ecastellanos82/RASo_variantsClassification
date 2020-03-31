@@ -517,6 +517,8 @@ Automatic_criteria_AMCG<- function(id){
 
 ####### MANUAL CRITERIA FUNCTION
 
+Manual_criteria_AMCG<-function(criteria){
+  
 #we ask the manual criteria in catalan, as technitians are catalan
 print(paste("En quantes de novo s'ha trobat?"))
 denovo<-as.integer(scan(n=1, what="integer"))
