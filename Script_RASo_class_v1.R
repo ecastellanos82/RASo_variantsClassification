@@ -640,9 +640,9 @@ Final_classification<-function(Manual_criteria){
 ###### ASK FOR VARIANT CLASSIFICATION
 
 
-id<- (13111) ## identifier from variants library in Pandora ctl + shift + j
+variantId<- (13111) ## identifier from variants library in Pandora ctl + shift + j
 
-criteria<-Automatic_criteria_AMCG(id)
+criteria<-Automatic_criteria_AMCG(variantId)
 
 Manual_criteria<-Manual_criteria_AMCG(criteria)
 
