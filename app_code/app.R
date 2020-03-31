@@ -87,6 +87,19 @@ server <- function(input, output) {
       
       con <- db_connect_postgres('db_pandora.conf')
       
+      ####### Stablished criteria are different depending on GOF genes and LOF genes. 
+      
+      #LOF Genes: NF1 & SPRED1. BP1 % PVS1 criteria are only applicable to LOF genes
+      #GOF Genes: BRAF, CBL, HRAS, KRAS, LZTR1, NF1, NRAS, MAP2K1, MAP2K2, PTPN11, RAF1, RIT1, SHOC2, SOS1, SOS2, SPRED1 i RASA1,
+      
+      ##### Calling RASopathies gene information
+      domain_groupRAF <- read.csv("~/GitHub/RASo_variantsClassification/domini_grupRAF.csv")
+      domain_groupRAS <- read.csv("~/GitHub/RASo_variantsClassification/domini_grupRAS.csv")
+      domain_groupSOS <- read.csv("~/GitHub/RASo_variantsClassification/domini_grupSOS.csv")
+      domain_groupMAPK <- read.csv("~/GitHub/RASo_variantsClassification/domini_grupMAPK.csv")
+      Transcripts_RASos <- read.csv("~/GitHub/RASo_variantsClassification/Transcripts_RASos.csv")
+      
+      
       ###outputs examples
       
       output$tbl <- renderTable({
