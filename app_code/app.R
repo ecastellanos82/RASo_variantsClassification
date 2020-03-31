@@ -19,8 +19,8 @@ ui <- fluidPage(
    # Numeric Input with variant identifier in Pandora 
   sidebarLayout(
     sidebarPanel(     
-      helpText("Classify variants in RASopathy-related genes 
-               automatically following ACMG guidelines"),
+      helpText("Please, indicate teh identifier at Pandora
+               of the variant you want to classify [ctl + shift + j]"),
       
       numericInput(inputId = "variantId", 
                    label = "Specify variant iD in Pandora",
@@ -47,6 +47,14 @@ ui <- fluidPage(
 # Define server logic required to draw a histogram
 server <- function(input, output) {
    
+      my_connection <- dbConnect(
+        MySQL(),
+        user="genome",
+        dbname="hg38",
+        host="genome-euro-mysql.soe.ucsc.edu",
+        port=3306
+      )
+      
       output$tbl <- renderTable({
       conn <- dbConnect(
         drv = RMySQL::MySQL(),
