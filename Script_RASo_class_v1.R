@@ -84,14 +84,13 @@ Automatic_criteria_AMCG<- function(id){
     
   }
   
-  if (is.na(bp1$validatedEffect)){
+  else if (is.na(bp1$validatedEffect)){
     #criteria["BP1",1][(bp1[1,"symbol"]=="NF1"|bp1[1,"symbol"]=="SPRED1")&bp1[1,"effect"]=="nonsynonymous SNV"]<-1 #si el gen es NF1 o SPRED1 i és una missense, s'assigna el valor 1 a la matriu criteria BP1
     #criteria["BP1",1][(bp1[1,"symbol"]=="NF1"|bp1[1,"symbol"]=="SPRED1")&bp1[1,"effect"]!="nonsynonymous SNV"]<-0#si el gen es NF1 o SPRED1 i no  ?s una missense, s'assigna el valor 0 a la matriu criteria BP1
     criteria["BP1",1][(gen!="NF1"&gen!="SPRED1")&(bp1[1,"effect"]=="stopgain"|bp1[1,"effect"]=="stoploss"|bp1[1,"effect"]=="frameshift deletion")]<-1 #If the variant is a null variant in any RASo gene (not NF1 nor SPRED1 genes), BP1 = 1
     criteria["BP1",1][(bp1[1,"symbol"]=="NF1"|bp1[1,"symbol"]=="SPRED1")&(bp1[1,"effect"]=="stopgain"|bp1[1,"effect"]=="stoploss"|bp1[1,"effect"]=="frameshift deletion")]<-0 #If the variant is a null variant in any NF1 nor SPRED1 genes, BP1 = 0
     criteria["BP1",1][bp1[1,"effect"]=="nonsynonymous SNV"]<-0 #if variant is a missense, the value is 0
     criteria["PVS1",1][(bp1[1,"symbol"]=="NF1"|bp1[1,"symbol"]=="SPRED1")&(bp1[1,"effect"]=="stopgain"|bp1[1,"effect"]=="stoploss"|bp1[1,"effect"]=="frameshift deletion")]<-1 #If the variant is a null variant in NF1 or SPRED1 gene, PVS1 = 1
-    
   }
   
   criteria["PVS1",1][is.na(criteria["PVS1",1])]<-0 #we assign PVS1 = 0 if none of the previous conditions has been acomplished.
@@ -129,60 +128,60 @@ Automatic_criteria_AMCG<- function(id){
         group_position<-relative_position+functional_domain$SOS2.start # it looks at what position is equivalent to the other domain of the same group of genes, in that case, SOS2
       }
       
-      if (gen=="SOS2"){
+      else if (gen=="SOS2"){
         functional_domain<-domain_groupSOS[num>=domain_groupSOS$SOS2.start&num<=domain_groupSOS$SOS2.end,]
         relative_position<-num-functional_domain$SOS2.start
         group_position<-relative_position+functional_domain$SOS1.start
       }
       
-      if(gen=="BRAF"){
+      else if(gen=="BRAF"){
         functional_domain<-domain_groupRAF[num>=domain_groupRAF$BRAF.start&num<=domain_groupRAF$BRAF.end,]
         relative_position<-num-functional_domain$BRAF.start
         group_position<-relative_position+functional_domain$RAF1.start
       }
-      if (gen=="RAF1"){
+      else if (gen=="RAF1"){
         functional_domain<-domain_groupRAF[num>=domain_groupRAF$RAF1.start&num<=domain_groupRAF$RAF1.end,]
         relative_position<-num-functional_domain$RAF1.start
         group_position<-relative_position+functional_domain$BRAF.start
       }
-      if (gen=="MAP2K1"){
+      else if (gen=="MAP2K1"){
         functional_domain<-domain_groupMAPK[num>=domain_groupMAPK$MAP2K1.start&num<=domain_groupMAPK$MAP2K1.end,]
         relative_position<-num-functional_domain$MAP2K1.start
         group_position<-relative_position+functional_domain$MAP2K2.start}
       
-      if (gen=="MAP2K2"){
+      else if (gen=="MAP2K2"){
         functional_domain<-domain_groupMAPK[num>=domain_groupMAPK$MAP2K2.start&num<=domain_groupMAPK$MAP2K2.end,]
         relative_position<-num-functional_domain$MAP2K2.start
         group_position<-relative_position+functional_domain$MAP2K1.start
       }
-      if (gen=="NRAS"){
+      else if (gen=="NRAS"){
         functional_domain<-domain_groupRAS[num>=domain_groupRAS$NRAS.start&num<=domain_groupRAS$NRAS.end,]
         relative_position<-num-functional_domain$NRAS.start
         group_position<-c(relative_position+functional_domain$HRAS.start,relative_position+functional_domain$KRAS.start )
       }
-      if (gen=="HRAS"){
+      else if (gen=="HRAS"){
         functional_domain<-domain_groupRAS[num>=domain_groupRAS$HRAS.start&num<=domain_groupRAS$HRAS.end,]
         relative_position<-num-functional_domain$HRAS.start
         if (nrow(functional_domain)>0){
           if (functional_domain$NRAS.start==0){
             group_position<-relative_position+functional_domain$KRAS.start
           }
-          if (functional_domain$NRAS.start!=0){
+          else if (functional_domain$NRAS.start!=0){
             group_position<-c(relative_position+functional_domain$KRAS.start,relative_position+functional_domain$NRAS.start )
           }
         }}
-      if (gen=="KRAS"){
+      else if (gen=="KRAS"){
         functional_domain<-domain_groupRAS[num>=domain_groupRAS$KRAS.start&num<=domain_groupRAS$KRAS.end,]
         relative_position<-num-functional_domain$KRAS.start
         if (nrow(functional_domain)>0){
           if (functional_domain$NRAS.start==0){
             group_position<-relative_position+functional_domain$HRAS.start
           }
-          if (functional_domain$NRAS.start!=0){
+          else if (functional_domain$NRAS.start!=0){
             group_position<-c(relative_position+functional_domain$HRAS.start,relative_position+functional_domain$NRAS.start )
           }}}
       
-      if(length(group_position)!=0){
+      else if(length(group_position)!=0){
         group_position2<-paste("p.",first_aa, group_position, aa_canvi, sep="")
         join_ps1<- paste('SELECT  "VA_VariantsInTranscripts"."uniqueVariantId", "cDNAAnnotation", "proteinAnnotation", "transcriptId",  "VA_CustomClassification"."date", "classification"
                          FROM "VA_VariantsInTranscripts"
@@ -242,7 +241,7 @@ Automatic_criteria_AMCG<- function(id){
               pm5.3b<-pm5.1b[i,]
               pm5.2b<-rbind(pm5.2b,pm5.3b)
             }
-            if (duplicatsb[i]==TRUE& pm5.1b$date[i]>pm5.2b$date[pm5.2b$uniqueVariantId==pm5.1b$uniqueVariantId[i]]){
+            else if (duplicatsb[i]==TRUE& pm5.1b$date[i]>pm5.2b$date[pm5.2b$uniqueVariantId==pm5.1b$uniqueVariantId[i]]){
               pm5.2b$date[pm5.2b$uniqueVariantId==pm5.1b$uniqueVariantId[i]]<-pm5.1b$date[i]
               pm5.2b$classification[pm5.2b$uniqueVariantId==pm5.1b$uniqueVariantId[i]]<-pm5.1b$classification[i]
             }}
@@ -262,7 +261,7 @@ Automatic_criteria_AMCG<- function(id){
         pm5.3<-pm5.1[i,]
         pm5.2<-rbind(pm5.2,pm5.3)
       }
-      if (duplicats[i]==TRUE& pm5.1$date[i]>pm5.2$date[pm5.2$uniqueVariantId==pm5.1$uniqueVariantId[i]]){
+      else if (duplicats[i]==TRUE& pm5.1$date[i]>pm5.2$date[pm5.2$uniqueVariantId==pm5.1$uniqueVariantId[i]]){
         pm5.2$date[pm5.2$uniqueVariantId==pm5.1$uniqueVariantId[i]]<-pm5.1$date[i]
         pm5.2$classification[pm5.2$uniqueVariantId==pm5.1$uniqueVariantId[i]]<-pm5.1$classification[i]
       }}
@@ -315,7 +314,7 @@ Automatic_criteria_AMCG<- function(id){
       if(str_detect(proti,"_")==F){
         num<-as.integer(str_sub(proti,2,str_length(proti)-1))
       }
-      if(str_detect(proti,"_")==T){ #it takes inframe positions
+      else if(str_detect(proti,"_")==T){ #it takes inframe positions
         sep<-unlist(strsplit(proti, "_"))
         num<-sep[1]
       }
@@ -386,7 +385,7 @@ Automatic_criteria_AMCG<- function(id){
     if(!is.na(pm4$validatedEffect)){
       result<-NULL
     }
-    if(!is.na(pm4$validatedEffect)){
+    else if(!is.na(pm4$validatedEffect)){
       if (pm4$validatedEffect=="frameshift"|pm4$validatedEffect %in% "in frame"){ # if it equals a frameshift or inframe
         library(RMySQL)
         query<-paste('SELECT * FROM rmsk WHERE genoStart< ',pm4$start, ' AND genoEnd>',pm4$end,' AND genoName=\'chr',pm4$chr,'\' ', sep="") #agafem informacio del UCSC RepeatMasker
@@ -415,14 +414,14 @@ Automatic_criteria_AMCG<- function(id){
     if(efecte_validat[1]=="missense (non-synonymous)"){
       criteria["PP2", 1]<-1
     }
-    if (efecte_validat[1]!="missense (non-synonymous)"){
+    else if (efecte_validat[1]!="missense (non-synonymous)"){
       criteria["PP2", 1]<-0
     }}
-  if (length(efecte_validat)==0 &length(efecte_novalidat)>0){ #it considers the ones that have no value in validated effect and look at the effect field
+  else if (length(efecte_validat)==0 &length(efecte_novalidat)>0){ #it considers the ones that have no value in validated effect and look at the effect field
     if (efecte_novalidat[1]=="nonsynonymous SNV"){
       criteria["PP2", 1]<-1
     }
-    if(efecte_novalidat[1]!="nonsynonymous SNV"){
+    else if(efecte_novalidat[1]!="nonsynonymous SNV"){
       criteria["PP2", 1]<-0
     }}
   
@@ -483,7 +482,7 @@ Automatic_criteria_AMCG<- function(id){
     criteria[c("BS2","PS4_strong","PS4_moderate", "PS4_supporting"),1][affected_independently==2|affected_independently==1]<-c(0,0,0,1)
     criteria[c("BS2","PS4_strong","PS4_moderate", "PS4_supporting"),1][affected_independently==0]<-c(0,0,0,0)
   }
-  if (independent_control<3&independent_control>0){
+  else if (independent_control<3&independent_control>0){
     print (paste("bs2: S'han trobat", independent_control, "healthy individuals harboing the variant"))
     print (paste("ps4: S'han trobat", affected_independently, "affected individuals harboring the variant"))
   }
@@ -503,68 +502,65 @@ Automatic_criteria_AMCG<- function(id){
   return(criteria)
 }
 
-
 ####### MANUAL CRITERIA FUNCTION
 
-Manual_criteria_AMCG<-function(criteria){
-  
-  #we ask the manual criteria in catalan, as technitians are catalan
-  print(paste("En quantes de novo s'ha trobat?"))
-  denovo<-as.integer(scan(n=1, what="integer"))
-  if (denovo!=0){
-    print ("En quantes d'aquestes s'ha estudiat als progenitors? Primer entra el nombre que tenen pare i mare confirmat i després el nombre que tenen només 1 dels dos confirmat")
-    denovo_confirmed<-as.integer(scan(n=2, what="integer"))
-  }
-  if (denovo==0){
-    denovo_confirmed=c(0,0)
-  }
-  
-  denovo_noconfirmed=denovo-denovo_confirmed[1]
-  criteria["PS2_veryStrong",1][denovo_confirmed[1]<2|denovo_confirmed[2]<3]<-0
-  criteria[c("PS2_veryStrong","PS2"),1][denovo_confirmed[1]>=2]<-c(1,0)
-  criteria[c("PS2_veryStrong", "PS2"),1][denovo_confirmed[2]>=3]<-c(1,0)
-  criteria[c("PS2_veryStrong","PS2"),1][denovo_confirmed[2]==2&denovo_confirmed[1]==1]<-c(1,0)
-  if (criteria["PS2_veryStrong",1]==0){
-    criteria["PS2",1][denovo_confirmed[1]==1]<-1 # PS2 = 1 if there is one occurence with parental confirmation
-    criteria["PS2",1][denovo_confirmed[1]==0]<-0# PS2 = 0 if there is no one occurence with parental confirmation
-  }
-  criteria[c("PM6_veryStrong","PM6"),1][denovo_noconfirmed>=4]<-c(1,0) # PM6_veryStrong = 1 if there is 4 occurence without parental confirmation
-  criteria["PM6_veryStrong",1][denovo_noconfirmed<4]<-0
-  criteria["PM6_strong",1][denovo_noconfirmed==2|denovo_noconfirmed==3]<-1
-  criteria["PM6_strong",1][denovo_noconfirmed!=2&denovo_noconfirmed!=3]<-0
-  criteria["PM6",1][denovo_noconfirmed==1]<-1
-  criteria["PM6",1][denovo_noconfirmed!=1]<-0
-  
-  print(paste("Hi ha cosegregació de la variant amb la malaltia? Indica els casos en que cosegrega"))
-  cosegregacio<-as.integer(scan(n=1, what="integer"))
-  criteria[c("PP1_strong", "PP1_moderate", "PP1_supporting"),1][cosegregacio>=7]<-c(1,0,0)
-  criteria[c("PP1_strong", "PP1_moderate", "PP1_supporting"),1][cosegregacio==5|cosegregacio==6]<-c(0,1,0)
-  criteria[c("PP1_strong", "PP1_moderate", "PP1_supporting"),1][cosegregacio==3|cosegregacio==4]<-c(0,0,1)
-  criteria[c("PP1_strong", "PP1_moderate", "PP1_supporting"),1][cosegregacio<3]<-c(0,0,0)
-  
-  print("Hi ha evidència en alguna base de dades fiable de que la variant és patogènica o benigne? Primer indica s'hi ha de patogènica, on 1 es que  n'hi ha i 0 si no n'hi ha i després el mateix però amb benigne")
-  evidencia<-as.integer(scan(n=2, what="integer"))
-  criteria[c("PP5", "BP6"),1]<-c(evidencia[1], evidencia[2])
-  
-  
-  for(i in 1:nrow(criteria)){
-    # if it is in that row the criterion is NA
-    while(is.na(criteria[i,]))
-    {
-      # it shows the user what criterion corresponds 
-      print(paste("compleix el criteri:",row.names(criteria)[i]))
-      # it asks to be entered
-      input<-scan(n=1,what="integer")
-      if (input>1){ #si és més gran que 1 surt el missatge d'error
-        print("input no valid, només posar 0 (si no compleix) o 1 (si compleix)")
-      }
-      else{
-        #it writes what the user indicates
-        criteria[i,]<-as.integer(input)}
+#we ask the manual criteria in catalan, as technitians are catalan
+print(paste("En quantes de novo s'ha trobat?"))
+denovo<-as.integer(scan(n=1, what="integer"))
+if (denovo!=0){
+  print ("En quantes d'aquestes s'ha estudiat als progenitors? Primer entra el nombre que tenen pare i mare confirmat i després el nombre que tenen només 1 dels dos confirmat")
+  denovo_confirmed<-as.integer(scan(n=2, what="integer"))
+}
+else if (denovo==0){
+  denovo_confirmed=c(0,0)
+}
+
+denovo_noconfirmed=denovo-denovo_confirmed[1]
+criteria["PS2_veryStrong",1][denovo_confirmed[1]<2|denovo_confirmed[2]<3]<-0
+criteria[c("PS2_veryStrong","PS2"),1][denovo_confirmed[1]>=2]<-c(1,0)
+criteria[c("PS2_veryStrong", "PS2"),1][denovo_confirmed[2]>=3]<-c(1,0)
+criteria[c("PS2_veryStrong","PS2"),1][denovo_confirmed[2]==2&denovo_confirmed[1]==1]<-c(1,0)
+if (criteria["PS2_veryStrong",1]==0){
+  criteria["PS2",1][denovo_confirmed[1]==1]<-1 # PS2 = 1 if there is one occurence with parental confirmation
+  criteria["PS2",1][denovo_confirmed[1]==0]<-0# PS2 = 0 if there is no one occurence with parental confirmation
+}
+criteria[c("PM6_veryStrong","PM6"),1][denovo_noconfirmed>=4]<-c(1,0) # PM6_veryStrong = 1 if there is 4 occurence without parental confirmation
+criteria["PM6_veryStrong",1][denovo_noconfirmed<4]<-0
+criteria["PM6_strong",1][denovo_noconfirmed==2|denovo_noconfirmed==3]<-1
+criteria["PM6_strong",1][denovo_noconfirmed!=2&denovo_noconfirmed!=3]<-0
+criteria["PM6",1][denovo_noconfirmed==1]<-1
+criteria["PM6",1][denovo_noconfirmed!=1]<-0
+
+print(paste("Hi ha cosegregació de la variant amb la malaltia? Indica els casos en que cosegrega"))
+cosegregacio<-as.integer(scan(n=1, what="integer"))
+criteria[c("PP1_strong", "PP1_moderate", "PP1_supporting"),1][cosegregacio>=7]<-c(1,0,0)
+criteria[c("PP1_strong", "PP1_moderate", "PP1_supporting"),1][cosegregacio==5|cosegregacio==6]<-c(0,1,0)
+criteria[c("PP1_strong", "PP1_moderate", "PP1_supporting"),1][cosegregacio==3|cosegregacio==4]<-c(0,0,1)
+criteria[c("PP1_strong", "PP1_moderate", "PP1_supporting"),1][cosegregacio<3]<-c(0,0,0)
+
+print("Hi ha evidència en alguna base de dades fiable de que la variant és patogènica o benigne? Primer indica s'hi ha de patogènica, on 1 es que  n'hi ha i 0 si no n'hi ha i després el mateix però amb benigne")
+evidencia<-as.integer(scan(n=2, what="integer"))
+criteria[c("PP5", "BP6"),1]<-c(evidencia[1], evidencia[2])
+
+
+for(i in 1:nrow(criteria)){
+  # if it is in that row the criterion is NA
+  while(is.na(criteria[i,]))
+  {
+    # it shows the user what criterion corresponds 
+    print(paste("compleix el criteri:",row.names(criteria)[i]))
+    # it asks to be entered
+    input<-scan(n=1,what="integer")
+    if (input>1){ #si és més gran que 1 surt el missatge d'error
+      print("input no valid, només posar 0 (si no compleix) o 1 (si compleix)")
     }
+    else{
+      #it writes what the user indicates
+      criteria[i,]<-as.integer(input)}
   }
-  
-  return(criteria)
+}
+
+return(criteria)
 }
 
 ### FINAL CLASSIFICATION
@@ -609,15 +605,15 @@ Final_classification<-function(Manual_criteria){
       print("Variant Patogènica")
       print(suma_criteria)
     }
-    if (classification$pat==0&classification$likely_pat==1){
+    else if (classification$pat==0&classification$likely_pat==1){
       print ("Variant Probablement Patogènica")
       print(suma_criteria)
     }
-    if (classification$ben==1){
+    else if (classification$ben==1){
       print ("Variant Benigne")
       print(suma_criteria)
     }
-    if(classification$ben==0&classification$likely_ben==1){
+    else if(classification$ben==0&classification$likely_ben==1){
       print ("Variant Probablement Benigne")
       print(suma_criteria)
       
