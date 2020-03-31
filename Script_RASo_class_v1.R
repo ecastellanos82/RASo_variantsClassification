@@ -7,7 +7,7 @@ require("RPostgreSQL")
 ## reads a BD config file
 ## param db_conf: a full path to a config file (CSV)
 get_db_parameters <- function(db_conf) {
-    params <- read.table(conf, sep = ",", stringsAsFactors = FALSE)
+    params <- read.table("~/GitHub/RASo_variantsClassification/params.csv", sep = ",", stringsAsFactors = FALSE)
     return(list(user = params$V2[1],
                 password = params$V2[2],
                 dbname = params$V2[3],
@@ -15,9 +15,10 @@ get_db_parameters <- function(db_conf) {
                 port = params$V2[5]))
 }
 
-
 ## connects to the NGS BD using a config file
 ## param db_conf: a full path to a config file (CSV)
+
+
 db_connect_postgres <- function(db_conf) {
     drv <- dbDriver("PostgreSQL")
 
