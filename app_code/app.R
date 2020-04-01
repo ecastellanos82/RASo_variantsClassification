@@ -13,7 +13,7 @@ ui <- fluidPage(
    
   
    # Application title
-   titlePanel("RASopathy-related variant classification"),
+   titlePanel(h1("RASopathy-related variant classification", align = "center")),
    
    # Sidebar with a slider input for number of bins 
    # Numeric Input with variant identifier in Pandora 
@@ -22,15 +22,14 @@ ui <- fluidPage(
       helpText("Please, indicate teh identifier at Pandora
                of the variant you want to classify [ctl + shift + j]"),
       
-    numericInput(inputId = "id", 
-                   label = "Specify variant ID in Pandora",
-                   value = "", min = 0),
+    textInput(inputId = "id", label = "Specify variant ID in Pandora"),
     actionButton("go", "Go")), 
   
   # Show a plot of the generated distribution
-      mainPanel(
+     
+    mainPanel(
         tableOutput("Variant"),
-        textOutput("AutoClass")
+        textOutput("AutoClass") 
         
   )
 ))
@@ -38,7 +37,9 @@ ui <- fluidPage(
 # Define server logic required to connect to DB and run all functions to classifiy RASopathy variant
 server <- function(input, output) {
    
-  ## conection to UCSC
+  output$value <- renderText({input$id})
+  
+    ## conection to UCSC
       my_connection <- dbConnect(
         MySQL(),
         user="genome",
@@ -60,7 +61,6 @@ server <- function(input, output) {
       ## connects to the NGS BD using a config file
       ## param db_conf: a full path to a config file (CSV)
       
-      
       db_connect_postgres <- function(db_conf) {
         drv <- dbDriver("PostgreSQL")
         
@@ -78,7 +78,7 @@ server <- function(input, output) {
       
       con <- db_connect_postgres('db_pandora.conf')
       
-      ####### Stablished criteria are different depending on GOF genes and LOF genes. 
+  ####### Stablished criteria are different depending on GOF genes and LOF genes. 
       
       #LOF Genes: NF1 & SPRED1. BP1 % PVS1 criteria are only applicable to LOF genes
       #GOF Genes: BRAF, CBL, HRAS, KRAS, LZTR1, NF1, NRAS, MAP2K1, MAP2K2, PTPN11, RAF1, RIT1, SHOC2, SOS1, SOS2, SPRED1 i RASA1,
@@ -90,15 +90,13 @@ server <- function(input, output) {
       domain_groupMAPK <- read.csv("~/GitHub/RASo_variantsClassification/domini_grupMAPK.csv")
       Transcripts_RASos <- read.csv("~/GitHub/RASo_variantsClassification/Transcripts_RASos.csv")
       
-      ####### VARIANT CONFIRMATION
-   
-      ps1_aa<-paste('SELECT "cDNAAnnotation", "proteinAnnotation", "transcriptId"
+  ####### VARIANT CONFIRMATION
+     
+      data <- reactive({dbGetQuery(con, (ps1_aa<-paste('SELECT "cDNAAnnotation", "proteinAnnotation"
                 FROM "VA_VariantsInTranscripts"
-              WHERE "isMainTranscript"=\'TRUE\' AND "uniqueVariantId"=', id, 'ORDER BY date DESC LIMIT 1')
-      ps1_aa<-dbGetQuery(con, ps1_aa)  
+                WHERE "isMainTranscript"=\'TRUE\' AND "uniqueVariantId"=', input$id, 'ORDER BY date DESC LIMIT 1')))})
       
-      
-      bp1.1<-paste('SELECT "symbol","validatedEffect", "effect"
+      data2 <- reactive({dbGetQuery(con, (bp1.1<-paste('SELECT "symbol","validatedEffect", "effect"
              FROM "VA_VariantsInTranscripts" AS a
              LEFT OUTER JOIN "UniqueVariantsInGenome" AS b
              ON a."uniqueVariantId"=b."uniqueVariantId"
@@ -106,15 +104,15 @@ server <- function(input, output) {
              ON c."uniqueVariantId"=b."uniqueVariantId"
              LEFT OUTER JOIN "Genes" AS d
              ON c."transcriptId"=d."mainTranscriptId"
-             WHERE a."uniqueVariantId"=', id, 'AND a."isMainTranscript"=\'TRUE\' AND d."symbol"<> \'NA\' ORDER BY a."date" DESC LIMIT 1') #obtenim les coordenades, el cromosoma, l'efecte i el gen de la nostra variant. 
-      bp1<-dbGetQuery(con, bp1.1)
-      Variant<- data.frame(ps1_aa, bp1)
+             WHERE a."uniqueVariantId"=', input$id, 'AND a."isMainTranscript"=\'TRUE\' AND d."symbol"<> \'NA\' ORDER BY a."date" DESC LIMIT 1')))})
       
+      # Variant<- renderText(data())
+      
+      output$Variant <- renderTable(expr = data())
       
       ####### AUTOMATIC CRITERIA FUNCTION
       
-      
-    Automatic_criteria_AMCG<- function(id){
+      Automatic_criteria_AMCG<- function(id){
         #dataframe to fill with all criteria (each criteria in one line)
         criteria<-data.frame(criteria=c(rep(NA, 37)), row.names = c("PS1", "PS2_veryStrong", "PS2", "PS3", "PS4_strong", "PS4_moderate", "PS4_supporting", "PM5_strong",  "PM6_veryStrong", "PM6","PM1", "PM2", "PM4",  "PP1_strong", "PP1_moderate", "PP1_supporting", "PP2", "PP3","PP5", "BA1", "BS1", "BS2", "BS3", "BS4", "BP1", "BP2", "BP3", "BP4", "BP5", "BP6", "BP7", "BS1_supporting", "PM6_strong", "PM5", "PM5_supporting", "BP8", "PVS1"))
         
@@ -532,46 +530,42 @@ server <- function(input, output) {
                      LEFT OUTER JOIN "GeneCascade" AS f
                      ON f."id" = e."geneCascadeId"
                      WHERE a."id"=', id,'')
-        bs2<-dbGetQuery(con, bs2.1)
-        independent_control<-sum(bs2$name!="NF1_SPRED1"&bs2$name!="Rasopathies"|is.na(bs2$name))
-        affected_independently<-sum(bs2$name=="NF1_SPRED1"&!is.na(bs2$name)|bs2$name=="Rasopathies"&!is.na(bs2$name))
-        
-        criteria[c("BS2","PS4_strong", "PS4_moderate", "PS4_supporting"),1][independent_control>=3]<-c(1,0,0,0)
-        criteria[c("PS4_strong", "PS4_moderate", "PS4_supporting"),1][affected_independently==0]<-c(0,0,0)
-        if (independent_control==0){
-          criteria[c("BS2","PS4_strong","PS4_moderate", "PS4_supporting"),1][affected_independently>=5]<-c(0,1,0,0)
-          criteria[c("BS2","PS4_strong","PS4_moderate", "PS4_supporting"),1][affected_independently==3|affected_independently==4]<-c(0,0,1,0)
-          criteria[c("BS2","PS4_strong","PS4_moderate", "PS4_supporting"),1][affected_independently==2|affected_independently==1]<-c(0,0,0,1)
-          criteria[c("BS2","PS4_strong","PS4_moderate", "PS4_supporting"),1][affected_independently==0]<-c(0,0,0,0)
-        }
-        else if (independent_control<3&independent_control>0){
-          print (paste("bs2: S'han trobat", independent_control, "healthy individuals harboing the variant"))
-          print (paste("ps4: S'han trobat", affected_independently, "affected individuals harboring the variant"))
-        }
-        
-        
-        ## Addatpation PM2 & BS1:
-        #PM2:
-        #Bs1:
-        criteria["PM2",1][criteria["PM2",1]==1&independent_control>100]<-0 # independently that Pandora says variant is not described in population databases, if the variant is detected in more than 100 samples analyzed in Pandora and not showing RASopathy-like phentoype, and then used as control individuals, PM2 = 0
-        inhousefreq<-paste('SELECT "freqs","inHouseFrequency","inHouseNumber" FROM "VA_InHouseFrequencies" WHERE "uniqueVariantId"=', id,'ORDER BY "date" DESC LIMIT 1') # it takes the most updated frequency information of the variant of interest
-        inhouse<-dbGetQuery(con,inhousefreq)
-        if (is.na(BA1$PopFreqMax)){
-          criteria["BS1",1][independent_control>=1000&inhouse$inHouseFrequency[1]>=0.30]<-1 #independently that Pandora says variant is not described in population databases, if the variant is detected in more than 1000 samples analyzed in Pandora and not showing RASopathy-like phentoype, and then used as control individuals or in house-frequency >0,30, BS1 = 1
-          criteria["BS1_supporting",1][independent_control>500&independent_control<1000&inhouse$inHouseFrequency[1]>0.10&inhouse$inHouseFrequency[1]<0.30]<-1
-          criteria["BS1_supporting",1][is.na(criteria["BS1_supporting",1])]<-0
-        } 
-        return(criteria)
-      }
+  bs2<-dbGetQuery(con, bs2.1)
+  independent_control<-sum(bs2$name!="NF1_SPRED1"&bs2$name!="Rasopathies"|is.na(bs2$name))
+  affected_independently<-sum(bs2$name=="NF1_SPRED1"&!is.na(bs2$name)|bs2$name=="Rasopathies"&!is.na(bs2$name))
+  
+  criteria[c("BS2","PS4_strong", "PS4_moderate", "PS4_supporting"),1][independent_control>=3]<-c(1,0,0,0)
+  criteria[c("PS4_strong", "PS4_moderate", "PS4_supporting"),1][affected_independently==0]<-c(0,0,0)
+  if (independent_control==0){
+    criteria[c("BS2","PS4_strong","PS4_moderate", "PS4_supporting"),1][affected_independently>=5]<-c(0,1,0,0)
+    criteria[c("BS2","PS4_strong","PS4_moderate", "PS4_supporting"),1][affected_independently==3|affected_independently==4]<-c(0,0,1,0)
+    criteria[c("BS2","PS4_strong","PS4_moderate", "PS4_supporting"),1][affected_independently==2|affected_independently==1]<-c(0,0,0,1)
+    criteria[c("BS2","PS4_strong","PS4_moderate", "PS4_supporting"),1][affected_independently==0]<-c(0,0,0,0)
+  }
+  else if (independent_control<3&independent_control>0){
+    print (paste("bs2: S'han trobat", independent_control, "healthy individuals harboing the variant"))
+    print (paste("ps4: S'han trobat", affected_independently, "affected individuals harboring the variant"))
+  }
+  
+  
+  ## Addatpation PM2 & BS1:
+  #PM2:
+  #Bs1:
+  criteria["PM2",1][criteria["PM2",1]==1&independent_control>100]<-0 # independently that Pandora says variant is not described in population databases, if the variant is detected in more than 100 samples analyzed in Pandora and not showing RASopathy-like phentoype, and then used as control individuals, PM2 = 0
+  inhousefreq<-paste('SELECT "freqs","inHouseFrequency","inHouseNumber" FROM "VA_InHouseFrequencies" WHERE "uniqueVariantId"=', id,'ORDER BY "date" DESC LIMIT 1') # it takes the most updated frequency information of the variant of interest
+  inhouse<-dbGetQuery(con,inhousefreq)
+  if (is.na(BA1$PopFreqMax)){
+    criteria["BS1",1][independent_control>=1000&inhouse$inHouseFrequency[1]>=0.30]<-1 #independently that Pandora says variant is not described in population databases, if the variant is detected in more than 1000 samples analyzed in Pandora and not showing RASopathy-like phentoype, and then used as control individuals or in house-frequency >0,30, BS1 = 1
+    criteria["BS1_supporting",1][independent_control>500&independent_control<1000&inhouse$inHouseFrequency[1]>0.10&inhouse$inHouseFrequency[1]<0.30]<-1
+    criteria["BS1_supporting",1][is.na(criteria["BS1_supporting",1])]<-0
+  } 
+  return(criteria)
+}
       
-
-    criteria<-Automatic_criteria_AMCG(id)
-
-      ###outputs
+        ###outputs
       
-      output$Variant <- renderTable(expr = Variant, bordered = TRUE)
       
-      output$AutoClass <- renderTable(expr = criteria, bordered = TRUE)
+      output$AutoClass <- renderTable(expr = criteria)
 }
 
 # Run the application 
