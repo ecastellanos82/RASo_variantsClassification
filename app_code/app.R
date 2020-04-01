@@ -92,25 +92,21 @@ server <- function(input, output) {
       
   ####### VARIANT CONFIRMATION
      
-      data <- reactive({dbGetQuery(con, (ps1_aa<-paste('SELECT "cDNAAnnotation", "proteinAnnotation"
-                FROM "VA_VariantsInTranscripts"
-                WHERE "isMainTranscript"=\'TRUE\' AND "uniqueVariantId"=', input$id, 'ORDER BY date DESC LIMIT 1')))})
+      data <- reactive({(dbGetQuery(con, (bp1.1<-paste('SELECT "cDNAAnnotation", "proteinAnnotation", "symbol","validatedEffect", "effect"
+                              FROM "VA_VariantsInTranscripts" AS a
+                              LEFT OUTER JOIN "UniqueVariantsInGenome" AS b
+                              ON a."uniqueVariantId"=b."uniqueVariantId"
+                              LEFT OUTER JOIN "VA_VariantNomenclature" AS c
+                              ON c."uniqueVariantId"=b."uniqueVariantId"
+                              LEFT OUTER JOIN "Genes" AS d
+                              ON c."transcriptId"=d."mainTranscriptId"
+                              WHERE a."uniqueVariantId"=', input$id, 'AND 
+                              a."isMainTranscript"=\'TRUE\' AND d."symbol"<> \'NA\' ORDER BY a."date" DESC LIMIT 1'))))})
       
-      data2 <- reactive({dbGetQuery(con, (bp1.1<-paste('SELECT "symbol","validatedEffect", "effect"
-             FROM "VA_VariantsInTranscripts" AS a
-             LEFT OUTER JOIN "UniqueVariantsInGenome" AS b
-             ON a."uniqueVariantId"=b."uniqueVariantId"
-             LEFT OUTER JOIN "VA_VariantNomenclature" AS c
-             ON c."uniqueVariantId"=b."uniqueVariantId"
-             LEFT OUTER JOIN "Genes" AS d
-             ON c."transcriptId"=d."mainTranscriptId"
-             WHERE a."uniqueVariantId"=', input$id, 'AND a."isMainTranscript"=\'TRUE\' AND d."symbol"<> \'NA\' ORDER BY a."date" DESC LIMIT 1')))})
-      
-      # Variant<- renderText(data())
-      
+     
       output$Variant <- renderTable(expr = data())
       
-      ####### AUTOMATIC CRITERIA FUNCTION
+  ####### AUTOMATIC CRITERIA FUNCTION
       
       Automatic_criteria_AMCG<- function(id){
         #dataframe to fill with all criteria (each criteria in one line)
