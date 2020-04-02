@@ -29,7 +29,7 @@ ui <- fluidPage(
      
     mainPanel(
         tableOutput("Variant"),
-        textOutput("AutoClass") 
+        tableOutput("AutoClass") 
         
   )
 ))
@@ -666,7 +666,7 @@ server <- function(input, output) {
   
   #### VARIANT CONFIRMATION
      
-      data <- reactive({(dbGetQuery(con, (bp1.1<-paste('SELECT "cDNAAnnotation", "proteinAnnotation", "symbol","validatedEffect", "effect"
+      variant_reactive <- reactive({(dbGetQuery(con, (bp1.1<-paste('SELECT "cDNAAnnotation", "proteinAnnotation", "symbol","validatedEffect", "effect"
                               FROM "VA_VariantsInTranscripts" AS a
                               LEFT OUTER JOIN "UniqueVariantsInGenome" AS b
                               ON a."uniqueVariantId"=b."uniqueVariantId"
@@ -676,17 +676,14 @@ server <- function(input, output) {
                               ON c."transcriptId"=d."mainTranscriptId"
                               WHERE a."uniqueVariantId"=', input$id, 'AND 
                               a."isMainTranscript"=\'TRUE\' AND d."symbol"<> \'NA\' ORDER BY a."date" DESC LIMIT 1'))))})
-      output$Variant <- renderTable(expr = data())
+      output$Variant <- renderTable(expr = variant_reactive(), rownames = TRUE, bordered = FALSE)
     
   
   #### AUTOMATIC VARIANT CLASSIFICATION
      
-  data <-reactive({Automatic_criteria_AMCG(id = input$id, con = con)})
-      
-  output$AutoClass <- renderTable(expr = data)
-      
-      
-      
+      AutomClass_reactive <-reactive({Automatic_criteria_AMCG(id = input$id, con = con)})
+      output$AutoClass <- renderTable(expr = AutomClass_reactive(),rownames = TRUE, bordered = FALSE)
+  
 }
 
 # Run the application 
