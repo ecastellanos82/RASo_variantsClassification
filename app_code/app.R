@@ -24,10 +24,10 @@ ui <- fluidPage(
       
     textInput(inputId = "id", label = "Specify variant ID in Pandora"),
     numericInput(inputId = "denovo", label = "Number of the novo cases reported",value = 0),
-    numericInput(inputId = "denovo_confirmed", label = "Number of the novo cases reported",value = 0),
-    numericInput(inputId = "cosegregation", label = "Number of the novo cases reported",value = 0),
-    numericInput(inputId = "PPAT_evidence", label = "Number of the novo cases reported",value = 0),
-    numericInput(inputId = "PPOL_evidence", label = "Number of the novo cases reported",value = 0),
+    numericInput(inputId = "denovo_confirmed", label = "From those, how many the novo cases have paternity demostrated?",value = 0),
+    numericInput(inputId = "cosegregation", label = "Number of the cosegregated families reported",value = 0),
+    numericInput(inputId = "PPAT_evidence", label = "Are relevant references demostrating variant pathogenicity? in case of yes = 1",value = 0),
+    numericInput(inputId = "PPOL_evidence", label = "Are relevant references demostrating variant neutrality? in case of yes = 1",value = 0),
     
     actionButton("go", "Go")), 
   
@@ -103,7 +103,7 @@ server <- function(input, output) {
       
   ####### AUTOMATIC CRITERIA FUNCTION
       
-  Automatic_criteria_AMCG<- function(id = input$id, con = con){
+  Automatic_criteria_AMCG<- function(id = input$id, con = con, denovo = input$denovo, denovo_confirmed = input$denovo_confirmed){
     #dataframe to fill with all criteria (each criteria in one line)
     criteria<-data.frame(criteria=c(rep(NA, 37)), row.names = c("PS1", "PS2_veryStrong", "PS2", "PS3", "PS4_strong", "PS4_moderate", "PS4_supporting", "PM5_strong",  "PM6_veryStrong", "PM6","PM1", "PM2", "PM4",  "PP1_strong", "PP1_moderate", "PP1_supporting", "PP2", "PP3","PP5", "BA1", "BS1", "BS2", "BS3", "BS4", "BP1", "BP2", "BP3", "BP4", "BP5", "BP6", "BP7", "BS1_supporting", "PM6_strong", "PM5", "PM5_supporting", "BP8", "PVS1"))
     
@@ -550,6 +550,25 @@ server <- function(input, output) {
     criteria["BS1_supporting",1][independent_control>500&independent_control<1000&inhouse$inHouseFrequency[1]>0.10&inhouse$inHouseFrequency[1]<0.30]<-1
     criteria["BS1_supporting",1][is.na(criteria["BS1_supporting",1])]<-0
   } 
+  
+  ### PS2 and PM6
+  denovo <- as.integer(denovo)
+  denovo_confirmed <- as.integer(denovo_confirmed)
+  denovo_noconfirmed=denovo-denovo_confirmed[1]
+  criteria["PS2_veryStrong",1][denovo_confirmed[1]<2|denovo_confirmed[2]<3]<-0
+  criteria[c("PS2_veryStrong","PS2"),1][denovo_confirmed[1]>=2]<-c(1,0)
+  criteria[c("PS2_veryStrong", "PS2"),1][denovo_confirmed[2]>=3]<-c(1,0)
+  criteria[c("PS2_veryStrong","PS2"),1][denovo_confirmed[2]==2&denovo_confirmed[1]==1]<-c(1,0)
+  if (criteria["PS2_veryStrong",1]==0){
+    criteria["PS2",1][denovo_confirmed[1]==1]<-1 # PS2 = 1 if there is one occurence with parental confirmation
+    criteria["PS2",1][denovo_confirmed[1]==0]<-0# PS2 = 0 if there is no one occurence with parental confirmation
+  }
+  criteria[c("PM6_veryStrong","PM6"),1][denovo_noconfirmed>=4]<-c(1,0) # PM6_veryStrong = 1 if there is 4 occurence without parental confirmation
+  criteria["PM6_veryStrong",1][denovo_noconfirmed<4]<-0
+  criteria["PM6_strong",1][denovo_noconfirmed==2|denovo_noconfirmed==3]<-1
+  criteria["PM6_strong",1][denovo_noconfirmed!=2&denovo_noconfirmed!=3]<-0
+  criteria["PM6",1][denovo_noconfirmed==1]<-1
+  criteria["PM6",1][denovo_noconfirmed!=1]<-0
   return(criteria)
 }
  
@@ -618,7 +637,7 @@ server <- function(input, output) {
       
   ###### FINAL CLASSIFICATION
       
-  Final_classification<-function(Manual_criteria){
+ Final_classification<-function(Manual_criteria){
         suma_criteria<- data.frame(verystrong_pat=sum(criteria[2,1], criteria[9,1], criteria[37,1]),strong_pat=sum(criteria[1,1], criteria[3:5,1],criteria[8,1], criteria[33,1]),moderate_pat=sum(criteria[6,1],criteria[10:13,1],criteria[15,1],criteria[34,1]), supporting_pat=sum(criteria[16:19,1], criteria[7,1], criteria[35,1]), very_strong_benign=sum(criteria[20,1]), strong_benign=sum(criteria[21:24,1]), support_benign=sum(criteria[25:32,1],criteria[36,1]))
         
         classification<- data.frame(pat=0, likely_pat=0, ben=0, likely_ben=0, vsd=0)
@@ -692,7 +711,7 @@ server <- function(input, output) {
   
   #### AUTOMATIC VARIANT CLASSIFICATION
      
-      AutomClass_reactive <-reactive({Automatic_criteria_AMCG(id = input$id, con = con)})
+      AutomClass_reactive <-reactive({Automatic_criteria_AMCG(id = input$id, con = con,  denovo = input$denovo, denovo_confirmed = input$denovo_confirmed)})
       output$AutoClass <- renderTable(expr = AutomClass_reactive(),rownames = TRUE, bordered = FALSE)
   
 }
