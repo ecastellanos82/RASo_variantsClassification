@@ -23,8 +23,8 @@ ui <- fluidPage(
                of the variant you want to classify [ctl + shift + j]"),
       
     textInput(inputId = "id", label = "Specify variant ID in Pandora"),
-    numericInput(inputId = "denovo", label = "Number of the novo cases reported",value = 0),
-    numericInput(inputId = "denovo_confirmed", label = "From those, how many the novo cases have paternity demostrated?",value = 0),
+    textInput(inputId = "denovo_noconfirmed", label = "Number of the novo cases reported, paternity non-confirmed"),
+    textInput(inputId = "denovo_confirmed", label = "Number of the novo cases reported, paternity confirmed"),
     numericInput(inputId = "cosegregation", label = "Number of the cosegregated families reported",value = 0),
     numericInput(inputId = "PPAT_evidence", label = "Are relevant references demostrating variant pathogenicity? in case of yes = 1",value = 0),
     numericInput(inputId = "PPOL_evidence", label = "Are relevant references demostrating variant neutrality? in case of yes = 1",value = 0),
@@ -44,7 +44,7 @@ ui <- fluidPage(
 server <- function(input, output) {
    
   output$value <- renderText({input$id})
-  output$value <- renderText({input$denovo})
+  output$value <- renderText({input$denovo_noconfirmed})
   output$value <- renderText({input$denovo_confirmed})
   output$value <- renderText({input$cosegregation})
   output$value <- renderText({input$PPAT_evidence})
@@ -103,7 +103,7 @@ server <- function(input, output) {
       
   ####### AUTOMATIC CRITERIA FUNCTION
       
-  Automatic_criteria_AMCG<- function(id = input$id, con = con, denovo = input$denovo, denovo_confirmed = input$denovo_confirmed){
+  Automatic_criteria_AMCG<- function(id = input$id, con = con, denovo_noconfirmed = input$denovo_noconfirmed, denovo_confirmed = input$denovo_confirmed){
     #dataframe to fill with all criteria (each criteria in one line)
     criteria<-data.frame(criteria=c(rep(NA, 37)), row.names = c("PS1", "PS2_veryStrong", "PS2", "PS3", "PS4_strong", "PS4_moderate", "PS4_supporting", "PM5_strong",  "PM6_veryStrong", "PM6","PM1", "PM2", "PM4",  "PP1_strong", "PP1_moderate", "PP1_supporting", "PP2", "PP3","PP5", "BA1", "BS1", "BS2", "BS3", "BS4", "BP1", "BP2", "BP3", "BP4", "BP5", "BP6", "BP7", "BS1_supporting", "PM6_strong", "PM5", "PM5_supporting", "BP8", "PVS1"))
     
@@ -476,9 +476,6 @@ server <- function(input, output) {
         criteria["PP2", 1]<-0
       }}
     
-    #} 
-    
-    
     ##PP3 & BP4
     #PP3: Multiple lines of computational evidence support a deleterious effect on the gene or gene product (conservation, evolutionary, splicing impact,etc)
     #BP4: Multiple lines of computational evidence suggest no impact on gene or gene product (conservation, evolutionary, splicing, etc)
@@ -534,8 +531,6 @@ server <- function(input, output) {
     criteria[c("BS2","PS4_strong","PS4_moderate", "PS4_supporting"),1][affected_independently==0]<-c(0,0,0,0)
   }
   else if (independent_control<3&independent_control>0){
-    print (paste("bs2: S'han trobat", independent_control, "healthy individuals harboing the variant"))
-    print (paste("ps4: S'han trobat", affected_independently, "affected individuals harboring the variant"))
   }
   
   
@@ -551,24 +546,30 @@ server <- function(input, output) {
     criteria["BS1_supporting",1][is.na(criteria["BS1_supporting",1])]<-0
   } 
   
-  ### PS2 and PM6
-  denovo <- as.integer(denovo)
-  denovo_confirmed <- as.integer(denovo_confirmed)
-  denovo_noconfirmed=denovo-denovo_confirmed[1]
-  criteria["PS2_veryStrong",1][denovo_confirmed[1]<2|denovo_confirmed[2]<3]<-0
+  ###PS2, PM6
+  
+  if (denovo_noconfirmed==0){
+    denovo_confirmed<- c(0,0)
+    denovo_noconfirmed <- c(0,0)
+  }
+  else {
+    denovo_confirmed<-c(denovo_confirmed,0)
+    denovo_noconfirmed<-c(denovo_noconfirmed,0)
+  }
+  criteria["PS2_veryStrong",1][denovo_confirmed[1]<2|denovo_noconfirmed[2]<3]<-0
   criteria[c("PS2_veryStrong","PS2"),1][denovo_confirmed[1]>=2]<-c(1,0)
   criteria[c("PS2_veryStrong", "PS2"),1][denovo_confirmed[2]>=3]<-c(1,0)
-  criteria[c("PS2_veryStrong","PS2"),1][denovo_confirmed[2]==2&denovo_confirmed[1]==1]<-c(1,0)
+  criteria[c("PS2_veryStrong","PS2"),1][denovo_confirmed[2]==2&denovo_noconfirmed[1]==1]<-c(1,0)
   if (criteria["PS2_veryStrong",1]==0){
     criteria["PS2",1][denovo_confirmed[1]==1]<-1 # PS2 = 1 if there is one occurence with parental confirmation
     criteria["PS2",1][denovo_confirmed[1]==0]<-0# PS2 = 0 if there is no one occurence with parental confirmation
   }
-  criteria[c("PM6_veryStrong","PM6"),1][denovo_noconfirmed>=4]<-c(1,0) # PM6_veryStrong = 1 if there is 4 occurence without parental confirmation
-  criteria["PM6_veryStrong",1][denovo_noconfirmed<4]<-0
-  criteria["PM6_strong",1][denovo_noconfirmed==2|denovo_noconfirmed==3]<-1
-  criteria["PM6_strong",1][denovo_noconfirmed!=2&denovo_noconfirmed!=3]<-0
-  criteria["PM6",1][denovo_noconfirmed==1]<-1
-  criteria["PM6",1][denovo_noconfirmed!=1]<-0
+  #  criteria[c("PM6_veryStrong","PM6"),1][denovo_noconfirmed>=4]<-c(1,0) # PM6_veryStrong = 1 if there is 4 occurence without parental confirmation
+  #  criteria["PM6_veryStrong",1][denovo_noconfirmed<4]<-0
+  #  criteria[c("PM6_strong","PM6"),1][denovo_noconfirmed==2|denovo_noconfirmed==3]<-1
+  #  criteria[c("PM6_strong","PM6"),1][denovo_noconfirmed!=2&denovo_noconfirmed!=3]<-0
+  #  criteria["PM6",1][denovo_noconfirmed==1]<-1
+  #  criteria["PM6",1][denovo_noconfirmed!=1]<-0
   return(criteria)
 }
  
@@ -711,7 +712,7 @@ server <- function(input, output) {
   
   #### AUTOMATIC VARIANT CLASSIFICATION
      
-      AutomClass_reactive <-reactive({Automatic_criteria_AMCG(id = input$id, con = con,  denovo = input$denovo, denovo_confirmed = input$denovo_confirmed)})
+      AutomClass_reactive <-reactive({Automatic_criteria_AMCG(id = input$id, con = con,  denovo_noconfirmed = input$denovo_noconfirmed, denovo_confirmed = input$denovo_confirmed)})
       output$AutoClass <- renderTable(expr = AutomClass_reactive(),rownames = TRUE, bordered = FALSE)
   
 }
