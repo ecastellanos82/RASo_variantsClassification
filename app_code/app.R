@@ -6,7 +6,6 @@ require("RPostgreSQL")
 library(RMySQL)
 require(stringr)
 
-if (interactive()) {
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
@@ -23,19 +22,19 @@ ui <- fluidPage(
                of the variant you want to classify [ctl + shift + j]"),
       
     textInput(inputId = "id", label = "Specify variant ID in Pandora"),
-    textInput(inputId = "denovo_noconfirmed", label = "Number of the novo cases reported, paternity non-confirmed"),
-    textInput(inputId = "denovo_confirmed", label = "Number of the novo cases reported, paternity confirmed"),
-    numericInput(inputId = "cosegregation", label = "Number of the cosegregated families reported",value = 0),
+    numericInput(inputId = "denovo_noconfirmed", label = "Number of the novo cases reported, paternity non-confirmed", value = 0, min = 0),
+    numericInput(inputId = "denovo_confirmed", label = "Number of the novo cases reported, paternity confirmed", value = 0, min = 0),
+    numericInput(inputId = "cosegregation", label = "Number of the cosegregated families reported", value = 0, min = 0),
     numericInput(inputId = "PPAT_evidence", label = "Are relevant references demostrating variant pathogenicity? in case of yes = 1",value = 0, min = 0, max = 1),
-    numericInput(inputId = "PPOL_evidence", label = "Are relevant references demostrating variant neutrality? in case of yes = 1",value = 0, min = 0, max = 1),
-    
-    actionButton("go", "Go")), 
+    numericInput(inputId = "PPOL_evidence", label = "Are relevant references demostrating variant neutrality? in case of yes = 1",value = 0, min = 0, max = 1)
+    ), 
   
   # Show a plot of the generated distribution
      
     mainPanel(
         tableOutput("Variant"),
-        tableOutput("AutoClass") 
+        tableOutput("AutoClass"), 
+        tableOutput("FinalClass") 
         
   )
 ))
@@ -486,7 +485,8 @@ server <- function(input, output) {
                   FROM "VA_VariantsInTranscripts"
                   LEFT OUTER JOIN "VA_InSilicoPathogenicity" AS a
                   ON "VA_VariantsInTranscripts"."uniqueVariantId"= a."uniqueVariantId"
-                  WHERE "VA_VariantsInTranscripts"."uniqueVariantId"=', id, 'AND "isMainTranscript"=\'TRUE\' ORDER BY a."date" DESC LIMIT 1')
+                  WHERE "VA_VariantsInTranscripts"."uniqueVariantId"=', id, 'AND
+                  "isMainTranscript"=\'TRUE\' ORDER BY a."date" DESC LIMIT 1')
     pp3<-dbGetQuery(con, pp3.1)
     pp3$CADD_phred[pp3$CADD_phred>19]<-"D"
     pp3$CADD_phred[pp3$CADD_phred<10]<-"N"
@@ -550,6 +550,9 @@ server <- function(input, output) {
   
   ###PS2, PM6
   
+  
+  ###PS2, PM6
+  
   if (denovo_noconfirmed==0){
     denovo_confirmed<- c(0,0)
     denovo_noconfirmed <- c(0,0)
@@ -564,10 +567,16 @@ server <- function(input, output) {
   criteria[c("PS2_veryStrong","PS2"),1][denovo_confirmed[2]==2&denovo_noconfirmed[1]==1]<-c(1,0)
   if (criteria["PS2_veryStrong",1]==0){
     criteria["PS2",1][denovo_confirmed[1]==1]<-1 # PS2 = 1 if there is one occurence with parental confirmation
-    criteria["PS2",1][denovo_confirmed[1]==0]<-0# PS2 = 0 if there is no one occurence with parental confirmation
+    criteria["PS2",1][denovo_confirmed[1]==0]<-0 # PS2 = 0 if there is no one occurence with parental confirmation
   }
-  criteria[c("PM6_veryStrong","PM6"),1][denovo_noconfirmed>=4]<-c(1,0) # PM6_veryStrong = 1 if there is 4 occurence without parental confirmation
-  criteria[c("PM6_veryStrong","PM6"),1][denovo_noconfirmed<4]<-0
+  
+  if (denovo_noconfirmed[1]>=4){
+    criteria[c("PM6_veryStrong","PM6"),1]<-c(1,0)
+  }
+  else if (denovo_noconfirmed[1]<4){
+    criteria[c("PM6_veryStrong","PM6"),1]<-c(0,1)
+  }
+  
   if (criteria["PM6_veryStrong",1]==0){
     criteria[c("PM6_strong","PM6"),1][denovo_noconfirmed==2|denovo_noconfirmed==3]<-1
     criteria[c("PM6_strong","PM6"),1][denovo_noconfirmed!=2&denovo_noconfirmed!=3]<-0
@@ -586,128 +595,43 @@ server <- function(input, output) {
   ###PP5, BP6
   criteria[c("PP5", "BP6"),1]<-c(PPAT_evidence[1], PPOL_evidence[2])
   return(criteria)
-}
- 
-  ####### MANUAL CRITERIA FUNCTION
-      
-  Manual_criteria_AMCG<-function(criteria){
-        
-        #we ask the manual criteria in catalan, as technitians are catalan
-        print(paste("En quantes de novo s'ha trobat?"))
-        denovo<-as.integer(scan(n=1, what="integer"))
-        if (denovo!=0){
-          print ("En quantes d'aquestes s'ha estudiat als progenitors? Primer entra el nombre que tenen pare i mare confirmat i despr?s el nombre que tenen nom?s 1 dels dos confirmat")
-          denovo_confirmed<-as.integer(scan(n=2, what="integer"))
-        }
-        else if (denovo==0){
-          denovo_confirmed=c(0,0)
-        }
-        
-        denovo_noconfirmed=denovo-denovo_confirmed[1]
-        criteria["PS2_veryStrong",1][denovo_confirmed[1]<2|denovo_confirmed[2]<3]<-0
-        criteria[c("PS2_veryStrong","PS2"),1][denovo_confirmed[1]>=2]<-c(1,0)
-        criteria[c("PS2_veryStrong", "PS2"),1][denovo_confirmed[2]>=3]<-c(1,0)
-        criteria[c("PS2_veryStrong","PS2"),1][denovo_confirmed[2]==2&denovo_confirmed[1]==1]<-c(1,0)
-        if (criteria["PS2_veryStrong",1]==0){
-          criteria["PS2",1][denovo_confirmed[1]==1]<-1 # PS2 = 1 if there is one occurence with parental confirmation
-          criteria["PS2",1][denovo_confirmed[1]==0]<-0# PS2 = 0 if there is no one occurence with parental confirmation
-        }
-        criteria[c("PM6_veryStrong","PM6"),1][denovo_noconfirmed>=4]<-c(1,0) # PM6_veryStrong = 1 if there is 4 occurence without parental confirmation
-        criteria["PM6_veryStrong",1][denovo_noconfirmed<4]<-0
-        criteria["PM6_strong",1][denovo_noconfirmed==2|denovo_noconfirmed==3]<-1
-        criteria["PM6_strong",1][denovo_noconfirmed!=2&denovo_noconfirmed!=3]<-0
-        criteria["PM6",1][denovo_noconfirmed==1]<-1
-        criteria["PM6",1][denovo_noconfirmed!=1]<-0
-        
-        print(paste("Hi ha cosegregaci? de la variant amb la malaltia? Indica els casos en que cosegrega"))
-        cosegregacio<-as.integer(scan(n=1, what="integer"))
-        criteria[c("PP1_strong", "PP1_moderate", "PP1_supporting"),1][cosegregacio>=7]<-c(1,0,0)
-        criteria[c("PP1_strong", "PP1_moderate", "PP1_supporting"),1][cosegregacio==5|cosegregacio==6]<-c(0,1,0)
-        criteria[c("PP1_strong", "PP1_moderate", "PP1_supporting"),1][cosegregacio==3|cosegregacio==4]<-c(0,0,1)
-        criteria[c("PP1_strong", "PP1_moderate", "PP1_supporting"),1][cosegregacio<3]<-c(0,0,0)
-        
-        print("Hi ha evid?ncia en alguna base de dades fiable de que la variant ?s patog?nica o benigne? Primer indica s'hi ha de patog?nica, on 1 es que  n'hi ha i 0 si no n'hi ha i despr?s el mateix per? amb benigne")
-        evidencia<-as.integer(scan(n=2, what="integer"))
-        criteria[c("PP5", "BP6"),1]<-c(evidencia[1], evidencia[2])
-        
-        
-        for(i in 1:nrow(criteria)){
-          # if it is in that row the criterion is NA
-          while(is.na(criteria[i,]))
-          {
-            # it shows the user what criterion corresponds 
-            print(paste("compleix el criteri:",row.names(criteria)[i]))
-            # it asks to be entered
-            input<-scan(n=1,what="integer")
-            if (input>1){ #si ?s m?s gran que 1 surt el missatge d'error
-              print("input no valid, nom?s posar 0 (si no compleix) o 1 (si compleix)")
-            }
-            else{
-              #it writes what the user indicates
-              criteria[i,]<-as.integer(input)}
-          }
-        }
-        
-        return(criteria)
-      }
-      
-  ###### FINAL CLASSIFICATION
-      
- Final_classification<-function(Manual_criteria){
-        suma_criteria<- data.frame(verystrong_pat=sum(criteria[2,1], criteria[9,1], criteria[37,1]),strong_pat=sum(criteria[1,1], criteria[3:5,1],criteria[8,1], criteria[33,1]),moderate_pat=sum(criteria[6,1],criteria[10:13,1],criteria[15,1],criteria[34,1]), supporting_pat=sum(criteria[16:19,1], criteria[7,1], criteria[35,1]), very_strong_benign=sum(criteria[20,1]), strong_benign=sum(criteria[21:24,1]), support_benign=sum(criteria[25:32,1],criteria[36,1]))
-        
-        classification<- data.frame(pat=0, likely_pat=0, ben=0, likely_ben=0, vsd=0)
-        
-        classification$pat[suma_criteria$verystrong_pat>=1&suma_criteria$strong_pat>=1|
-                             suma_criteria$verystrong_pat>=1&suma_criteria$moderate_pat>=2|
-                             suma_criteria$verystrong_pat>=1&suma_criteria$moderate_pat==1&suma_criteria$supporting_pat==1|
-                             suma_criteria$verystrong_pat>=1&suma_criteria$supporting_pat>=2|
-                             suma_criteria$strong_pat>=2|
-                             suma_criteria$strong_pat==1&suma_criteria$moderate_pat>=3|
-                             suma_criteria$strong_pat==1&suma_criteria$moderate_pat==2&suma_criteria$supporting_pat>=2|
-                             suma_criteria$strong_pat==1&suma_criteria$moderate==1&suma_criteria$supporting_pat>=4]<-1
-        
-        classification$likely_pat[suma_criteria$verystrong_pat==1&suma_criteria$moderate_pat==1|
-                                    suma_criteria$strong_pat==1&suma_criteria$moderate_pat==1|
-                                    suma_criteria$strong_pat==1&suma_criteria$moderate_pat==2|
-                                    suma_criteria$strong_pat==1&suma_criteria$supporting_pat>=2|
-                                    suma_criteria$moderate_pat>=3|
-                                    suma_criteria$moderate_pat==2&suma_criteria$supporting_pat>=2|
-                                    suma_criteria$moderate_pat==1&suma_criteria$supporting_pat>=4]<-1
-        
-        classification$ben[suma_criteria$very_strong_benign==1|
+  }
+  
+  
+  ### FINAL CLASSIFICATION
+  
+  Final_classification<-function(criteria = AutomClass_reactive){
+    suma_criteria<- data.frame(verystrong_pat=sum(criteria[2,1], criteria[9,1], criteria[37,1]),strong_pat=sum(criteria[1,1], criteria[3:5,1],criteria[8,1], criteria[33,1]),moderate_pat=sum(criteria[6,1],criteria[10:13,1],criteria[15,1],criteria[34,1]), supporting_pat=sum(criteria[16:19,1], criteria[7,1], criteria[35,1]), very_strong_benign=sum(criteria[20,1]), strong_benign=sum(criteria[21:24,1]), support_benign=sum(criteria[25:32,1],criteria[36,1]))
+    
+    classification<- data.frame(PAT=0, Likely_PAT=0, Neutral=0, Likely_Neutral=0, VUS=0)
+    
+    classification$PAT[suma_criteria$verystrong_pat>=1&suma_criteria$strong_pat>=1|
+                         suma_criteria$verystrong_pat>=1&suma_criteria$moderate_pat>=2|
+                         suma_criteria$verystrong_pat>=1&suma_criteria$moderate_pat==1&suma_criteria$supporting_pat==1|
+                         suma_criteria$verystrong_pat>=1&suma_criteria$supporting_pat>=2|
+                         suma_criteria$strong_pat>=2|
+                         suma_criteria$strong_pat==1&suma_criteria$moderate_pat>=3|
+                         suma_criteria$strong_pat==1&suma_criteria$moderate_pat==2&suma_criteria$supporting_pat>=2|
+                         suma_criteria$strong_pat==1&suma_criteria$moderate==1&suma_criteria$supporting_pat>=4]<-1
+    
+    classification$Likely_PAT[suma_criteria$verystrong_pat==1&suma_criteria$moderate_pat==1|
+                                suma_criteria$strong_pat==1&suma_criteria$moderate_pat==1|
+                                suma_criteria$strong_pat==1&suma_criteria$moderate_pat==2|
+                                suma_criteria$strong_pat==1&suma_criteria$supporting_pat>=2|
+                                suma_criteria$moderate_pat>=3|
+                                suma_criteria$moderate_pat==2&suma_criteria$supporting_pat>=2|
+                                suma_criteria$moderate_pat==1&suma_criteria$supporting_pat>=4]<-1
+    
+    classification$Neutral[suma_criteria$very_strong_benign==1|
                              suma_criteria$strong_benign>=2]<-1
-        
-        classification$likely_ben[suma_criteria$strong_benign&suma_criteria$support_benign==1|
+    
+    classification$Likely_Neutral[suma_criteria$strong_benign&suma_criteria$support_benign==1|
                                     suma_criteria$support_benign>=2|
                                     suma_criteria$strong_benign>=1&criteria["BS1",1]==1&suma_criteria$very_strong_benign==0&suma_criteria$supporting_pat==0&suma_criteria$moderate_pat==0&suma_criteria$strong_pat==0&suma_criteria$verystrong_pat==0]<-1
-        classification$vsd[classification$pat==0&classification$likely_pat==0&classification$ben==0&classification$likely_ben==0|classification$pat==1&classification$ben==1|classification$pat==1&classification$likely_ben==1|classification$likely_pat==1&classification$ben==1|classification$likely_pat==1&classification$likely_ben==1]<-1
-        
-        
-        if (classification$vsd==1){
-          print("Variant de Significat Desconegut")
-          print(suma_criteria)
-        }
-        if(classification$vsd==0){
-          if (classification$pat==1){
-            print("Variant Patog?nica")
-            print(suma_criteria)
-          }
-          else if (classification$pat==0&classification$likely_pat==1){
-            print ("Variant Probablement Patog?nica")
-            print(suma_criteria)
-          }
-          else if (classification$ben==1){
-            print ("Variant Benigne")
-            print(suma_criteria)
-          }
-          else if(classification$ben==0&classification$likely_ben==1){
-            print ("Variant Probablement Benigne")
-            print(suma_criteria)
-            
-          }
-        }
-      }
+    classification$VUS[classification$PAT==0&classification$Likely_PAT==0&classification$Neutral==0&classification$Likely_Neutral==0|classification$PAT==1&classification$Neutral==1|classification$PAT==1&classification$Likely_Neutral==1|classification$Likely_PAT==1&classification$Neutral==1|classification$Likely_PAT==1&classification$Likely_Neutral==1]<-1
+    
+    return(classification)
+  }
       
   
   #### VARIANT CONFIRMATION
@@ -730,9 +654,12 @@ server <- function(input, output) {
       AutomClass_reactive <-reactive({Automatic_criteria_AMCG(id = input$id, con = con,  denovo_noconfirmed = input$denovo_noconfirmed, denovo_confirmed = input$denovo_confirmed)})
       output$AutoClass <- renderTable(expr = AutomClass_reactive(),rownames = TRUE, bordered = FALSE)
   
+      
+  #### FINAL VARIANT CLASSIFICATION
+      
+#      FinalClass_reactive <-reactive({Final_classification(criteria = AutomClass_reactive)})
+#      output$FinalClass <- renderTable(expr = FinalClass_reactive(),rownames = TRUE, bordered = FALSE)
 }
 
 # Run the application 
 shinyApp(ui = ui, server = server)
-
-}
