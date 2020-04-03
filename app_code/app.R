@@ -26,8 +26,8 @@ ui <- fluidPage(
     textInput(inputId = "denovo_noconfirmed", label = "Number of the novo cases reported, paternity non-confirmed"),
     textInput(inputId = "denovo_confirmed", label = "Number of the novo cases reported, paternity confirmed"),
     numericInput(inputId = "cosegregation", label = "Number of the cosegregated families reported",value = 0),
-    numericInput(inputId = "PPAT_evidence", label = "Are relevant references demostrating variant pathogenicity? in case of yes = 1",value = 0),
-    numericInput(inputId = "PPOL_evidence", label = "Are relevant references demostrating variant neutrality? in case of yes = 1",value = 0),
+    numericInput(inputId = "PPAT_evidence", label = "Are relevant references demostrating variant pathogenicity? in case of yes = 1",value = 0, min = 0, max = 1),
+    numericInput(inputId = "PPOL_evidence", label = "Are relevant references demostrating variant neutrality? in case of yes = 1",value = 0, min = 0, max = 1),
     
     actionButton("go", "Go")), 
   
@@ -103,7 +103,9 @@ server <- function(input, output) {
       
   ####### AUTOMATIC CRITERIA FUNCTION
       
-  Automatic_criteria_AMCG<- function(id = input$id, con = con, denovo_noconfirmed = input$denovo_noconfirmed, denovo_confirmed = input$denovo_confirmed){
+  Automatic_criteria_AMCG<- function(id = input$id, con = con, denovo_noconfirmed = input$denovo_noconfirmed,
+                                     denovo_confirmed = input$denovo_confirmed, cosegregation = input$cosegregation,
+                                     PPAT_evidence = input$PPAT_evidence, PPOL_evidence = input$PPOL_evidence){
     #dataframe to fill with all criteria (each criteria in one line)
     criteria<-data.frame(criteria=c(rep(NA, 37)), row.names = c("PS1", "PS2_veryStrong", "PS2", "PS3", "PS4_strong", "PS4_moderate", "PS4_supporting", "PM5_strong",  "PM6_veryStrong", "PM6","PM1", "PM2", "PM4",  "PP1_strong", "PP1_moderate", "PP1_supporting", "PP2", "PP3","PP5", "BA1", "BS1", "BS2", "BS3", "BS4", "BP1", "BP2", "BP3", "BP4", "BP5", "BP6", "BP7", "BS1_supporting", "PM6_strong", "PM5", "PM5_supporting", "BP8", "PVS1"))
     
@@ -575,6 +577,14 @@ server <- function(input, output) {
     criteria["PM6",1][denovo_noconfirmed!=1]<-0
   }
   
+  ###PP1
+  criteria[c("PP1_strong", "PP1_moderate", "PP1_supporting"),1][cosegregation>=7]<-c(1,0,0)
+  criteria[c("PP1_strong", "PP1_moderate", "PP1_supporting"),1][cosegregation==5|cosegregation==6]<-c(0,1,0)
+  criteria[c("PP1_strong", "PP1_moderate", "PP1_supporting"),1][cosegregation==3|cosegregation==4]<-c(0,0,1)
+  criteria[c("PP1_strong", "PP1_moderate", "PP1_supporting"),1][cosegregation<3]<-c(0,0,0)
+  
+  ###PP5, BP6
+  criteria[c("PP5", "BP6"),1]<-c(PPAT_evidence[1], PPOL_evidence[2])
   return(criteria)
 }
  
