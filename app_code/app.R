@@ -23,6 +23,8 @@ ui <- fluidPage(
                of the variant you want to classify [ctl + shift + j]"),
       
     textInput(inputId = "id", label = "Specify variant ID in Pandora"),
+    numericInput(inputId = "denovo", label = "Number of the novo cases reported",value = 0),
+    numericInput(inputId = "denovo_confirmed", label = "Number of the novo cases reported",value = 0),
     actionButton("go", "Go")), 
   
   # Show a plot of the generated distribution
@@ -38,6 +40,8 @@ ui <- fluidPage(
 server <- function(input, output) {
    
   output$value <- renderText({input$id})
+  output$value <- renderText({input$denovo})
+  output$value <- renderText({input$denovo_confirmed})
   
     ## conection to UCSC
       my_connection <- dbConnect(
