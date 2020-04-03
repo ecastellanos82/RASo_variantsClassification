@@ -564,12 +564,17 @@ server <- function(input, output) {
     criteria["PS2",1][denovo_confirmed[1]==1]<-1 # PS2 = 1 if there is one occurence with parental confirmation
     criteria["PS2",1][denovo_confirmed[1]==0]<-0# PS2 = 0 if there is no one occurence with parental confirmation
   }
-  #  criteria[c("PM6_veryStrong","PM6"),1][denovo_noconfirmed>=4]<-c(1,0) # PM6_veryStrong = 1 if there is 4 occurence without parental confirmation
-  #  criteria["PM6_veryStrong",1][denovo_noconfirmed<4]<-0
-  #  criteria[c("PM6_strong","PM6"),1][denovo_noconfirmed==2|denovo_noconfirmed==3]<-1
-  #  criteria[c("PM6_strong","PM6"),1][denovo_noconfirmed!=2&denovo_noconfirmed!=3]<-0
-  #  criteria["PM6",1][denovo_noconfirmed==1]<-1
-  #  criteria["PM6",1][denovo_noconfirmed!=1]<-0
+  criteria[c("PM6_veryStrong","PM6"),1][denovo_noconfirmed>=4]<-c(1,0) # PM6_veryStrong = 1 if there is 4 occurence without parental confirmation
+  criteria[c("PM6_veryStrong","PM6"),1][denovo_noconfirmed<4]<-0
+  if (criteria["PM6_veryStrong",1]==0){
+    criteria[c("PM6_strong","PM6"),1][denovo_noconfirmed==2|denovo_noconfirmed==3]<-1
+    criteria[c("PM6_strong","PM6"),1][denovo_noconfirmed!=2&denovo_noconfirmed!=3]<-0
+  }
+  if (criteria["PM6_strong",1]==0){
+    criteria["PM6",1][denovo_noconfirmed==1]<-1
+    criteria["PM6",1][denovo_noconfirmed!=1]<-0
+  }
+  
   return(criteria)
 }
  
