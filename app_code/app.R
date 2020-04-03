@@ -25,6 +25,10 @@ ui <- fluidPage(
     textInput(inputId = "id", label = "Specify variant ID in Pandora"),
     numericInput(inputId = "denovo", label = "Number of the novo cases reported",value = 0),
     numericInput(inputId = "denovo_confirmed", label = "Number of the novo cases reported",value = 0),
+    numericInput(inputId = "cosegregation", label = "Number of the novo cases reported",value = 0),
+    numericInput(inputId = "PPAT_evidence", label = "Number of the novo cases reported",value = 0),
+    numericInput(inputId = "PPOL_evidence", label = "Number of the novo cases reported",value = 0),
+    
     actionButton("go", "Go")), 
   
   # Show a plot of the generated distribution
@@ -42,6 +46,9 @@ server <- function(input, output) {
   output$value <- renderText({input$id})
   output$value <- renderText({input$denovo})
   output$value <- renderText({input$denovo_confirmed})
+  output$value <- renderText({input$cosegregation})
+  output$value <- renderText({input$PPAT_evidence})
+  output$value <- renderText({input$PPOL_evidence})
   
     ## conection to UCSC
       my_connection <- dbConnect(
