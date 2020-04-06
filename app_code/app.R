@@ -33,13 +33,15 @@ ui <- fluidPage(
       numericInput(inputId = "denovo_noconfirmed", label = "Number of the novo cases reported, paternity non-confirmed", value = 0, min = 0),
       numericInput(inputId = "denovo_confirmed", label = "Number of the novo cases reported, paternity confirmed", value = 0, min = 0),
       numericInput(inputId = "cosegregation", label = "Number of the cosegregated families reported", value = 0, min = 0),
-   #   selectInput(inputId = "PPAT_evidence", label = "Are relevant references demostrating variant pathogenicity", 
-  #                       choices = list("There is no evidence" = 0, 
-   #                                     "There is PPAT_evidence" = 1),
-  #                       selected = 0)),
-     numericInput(inputId = "PPAT_evidence", label = "Are relevant references demostrating variant pathogenicity? in case of yes = 1",value = 0, min = 0, max = 1),
-     numericInput(inputId = "PPOL_evidence", label = "Are relevant references demostrating variant neutrality? in case of yes = 1",value = 0, min = 0, max = 1)
-      ), 
+      selectInput(inputId = "PPAT_evidence", label = "Are relevant references demostrating variant pathogenicity?", 
+                         choices = list("There is no evidence" = 0, 
+                                        "There is PPAT_evidence" = 1), selected = 0),
+  #   numericInput(inputId = "PPAT_evidence", label = "Are relevant references demostrating variant pathogenicity? in case of yes = 1",value = 0, min = 0, max = 1),
+  #   numericInput(inputId = "PPOL_evidence", label = "Are relevant references demostrating variant neutrality? in case of yes = 1",value = 0, min = 0, max = 1)
+      selectInput(inputId = "PPOL_evidence", label = "Are relevant references demostrating variant neutrality?", 
+                        choices = list("There is no evidence" = 0, 
+                             "There is PPOL_evidence" = 1), selected = 0)  
+  ), 
     
     # Show a plot of the generated distribution
     
@@ -126,7 +128,8 @@ server <- function(input, output) {
       
  Automatic_criteria_AMCG<- function(id = input$id, con = con, denovo_noconfirmed = input$denovo_noconfirmed,
                                          denovo_confirmed = input$denovo_confirmed, cosegregation = input$cosegregation,
-                                         PPAT_evidence = as.numeric(as.character(input$PPAT_evidence)), PPOL_evidence = input$PPOL_evidence){
+                                         PPAT_evidence = as.numeric(as.character(input$PPAT_evidence)), 
+                                         PPOL_evidence = as.numeric(as.character(input$PPOL_evidence))){
         #dataframe to fill with all criteria (each criteria in one line)
         criteria<-data.frame(criteria=c(rep(NA, 37)), row.names = c("PS1", "PS2_veryStrong", "PS2", "PS3", "PS4_strong", "PS4_moderate", "PS4_supporting", "PM5_strong",  "PM6_veryStrong", "PM6","PM1", "PM2", "PM4",  "PP1_strong", "PP1_moderate", "PP1_supporting", "PP2", "PP3","PP5", "BA1", "BS1", "BS2", "BS3", "BS4", "BP1", "BP2", "BP3", "BP4", "BP5", "BP6", "BP7", "BS1_supporting", "PM6_strong", "PM5", "PM5_supporting", "BP8", "PVS1"))
         
@@ -606,7 +609,8 @@ server <- function(input, output) {
 
   Final_classificationB<- function(id = input$id, con = con, denovo_noconfirmed = input$denovo_noconfirmed,
                                      denovo_confirmed = input$denovo_confirmed, cosegregation = input$cosegregation,
-                                     PPAT_evidence = as.numeric(as.character(input$PPAT_evidence)), PPOL_evidence = input$PPOL_evidence){
+                                     PPAT_evidence = as.numeric(as.character(input$PPAT_evidence)), 
+                                     PPOL_evidence = as.numeric(as.character(input$PPOL_evidence))){
     #dataframe to fill with all criteria (each criteria in one line)
     criteria<-data.frame(criteria=c(rep(NA, 37)), row.names = c("PS1", "PS2_veryStrong", "PS2", "PS3", "PS4_strong", "PS4_moderate", "PS4_supporting", "PM5_strong",  "PM6_veryStrong", "PM6","PM1", "PM2", "PM4",  "PP1_strong", "PP1_moderate", "PP1_supporting", "PP2", "PP3","PP5", "BA1", "BS1", "BS2", "BS3", "BS4", "BP1", "BP2", "BP3", "BP4", "BP5", "BP6", "BP7", "BS1_supporting", "PM6_strong", "PM5", "PM5_supporting", "BP8", "PVS1"))
     
@@ -1133,7 +1137,10 @@ server <- function(input, output) {
   
   #### AUTOMATIC VARIANT CLASSIFICATION
       
-      AutomClass_reactive <-reactive({Automatic_criteria_AMCG(id = input$id, con = con,  denovo_noconfirmed = input$denovo_noconfirmed, denovo_confirmed = input$denovo_confirmed)})
+      AutomClass_reactive <-reactive({Automatic_criteria_AMCG(id = input$id, con = con, denovo_noconfirmed = input$denovo_noconfirmed,
+                                                              denovo_confirmed = input$denovo_confirmed, cosegregation = input$cosegregation,
+                                                              PPAT_evidence = as.numeric(as.character(input$PPAT_evidence)), 
+                                                              PPOL_evidence = as.numeric(as.character(input$PPOL_evidence)))})
       criteria <- renderTable(expr = AutomClass_reactive(),rownames = FALSE, bordered = FALSE)
       output$AutoClass <- criteria
 
@@ -1142,7 +1149,8 @@ server <- function(input, output) {
   #  FinalClass_reactive <-reactive({Final_classification(criteria = AutomClass_reactive$criteria)})
      FinalClass_reactive <-reactive({Final_classificationB(id = input$id, con = con, denovo_noconfirmed = input$denovo_noconfirmed,
                                                            denovo_confirmed = input$denovo_confirmed, cosegregation = input$cosegregation,
-                                                           PPAT_evidence = as.numeric(as.character(input$PPAT_evidence)), PPOL_evidence = input$PPOL_evidence)})
+                                                           PPAT_evidence = as.numeric(as.character(input$PPAT_evidence)), 
+                                                           PPOL_evidence = as.numeric(as.character(input$PPOL_evidence)))})
      
      output$FinalClass <- renderTable(expr = FinalClass_reactive(),rownames = TRUE, bordered = FALSE)
      output$PPAT_evidence <- renderPrint({Input$PPAT_evidence})
