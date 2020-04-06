@@ -13,14 +13,21 @@ ui <- fluidPage(
   
   
   # Application title
+  tags$br(),
+  fluidRow(
+    column(5, tags$img(height = 50, src = "LogoIGTPcolourtransparentENG.png"),offset = 9)
+    )
+  ,
   titlePanel(h1("RASopathy-related variant classification", align = "center")),
+  tags$br(),
+  tags$br(),
   
   # Sidebar with a slider input for number of bins 
   # Numeric Input with variant identifier in Pandora 
   sidebarLayout(
     sidebarPanel(     
-      helpText("Please, indicate teh identifier at Pandora
-               of the variant you want to classify [ctl + shift + j]"),
+      helpText("Please, indicate the variant's identifier at Pandora
+               [ctl + shift + j]"),
       
       textInput(inputId = "id", label = "Specify variant ID in Pandora"),
       numericInput(inputId = "denovo_noconfirmed", label = "Number of the novo cases reported, paternity non-confirmed", value = 0, min = 0),
@@ -33,11 +40,27 @@ ui <- fluidPage(
     # Show a plot of the generated distribution
     
     mainPanel(
-      tableOutput("Variant"),
-      tableOutput("AutoClass"), 
-      tableOutput("FinalClass") 
+      tags$h4(tags$style('h4 {color:darkblue;}')),
+      fluidRow( 
+                column(9, tags$h4("Variant to classify"), offset = 4),
+                column(9, tableOutput("Variant"), offset = 0)
+     ),
+     
+      tags$hr(),
+     
+   fluidRow( 
+     column(9, tags$h4("Criteria used to classify this variant"), offset = 3),
+     column(9, tableOutput("AutoClass"), offset = 4)
+    
+   ),
       
-    )
+      tags$hr(),
+ 
+     fluidRow( 
+     column(9, tags$h4("Variant classification following ACMG guidelines"), offset = 2),
+     column(9, tableOutput("FinalClass"), offset = 2)
+   )   
+   )
   ))
 
 # Define server logic required to connect to DB and run all functions to classifiy RASopathy variant
