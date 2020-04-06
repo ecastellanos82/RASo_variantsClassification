@@ -5,6 +5,7 @@ library(shiny)
 require("RPostgreSQL")
 library(RMySQL)
 require(stringr)
+library(DT)
 
 
 # Define UI for application that draws a histogram
@@ -550,9 +551,6 @@ server <- function(input, output) {
         
         ###PS2, PM6
         
-        
-        ###PS2, PM6
-        
         if (denovo_noconfirmed==0){
           denovo_confirmed<- c(0,0)
           denovo_noconfirmed <- c(0,0)
@@ -595,7 +593,12 @@ server <- function(input, output) {
         ###PP5, BP6
         criteria[c("PP5", "BP6"),1]<-c(PPAT_evidence[1], PPOL_evidence[2])
         
-   return(criteria)
+    AMGC<-data.frame(AMGC=c("PS1", "PS2_veryStrong", "PS2", "PS3", "PS4_strong", "PS4_moderate", "PS4_supporting", "PM5_strong",  "PM6_veryStrong", "PM6","PM1", "PM2", "PM4",  "PP1_strong", "PP1_moderate", "PP1_supporting", "PP2", "PP3","PP5", "BA1", "BS1", "BS2", "BS3", "BS4", "BP1", "BP2", "BP3", "BP4", "BP5", "BP6", "BP7", "BS1_supporting", "PM6_strong", "PM5", "PM5_supporting", "BP8", "PVS1"))
+    criteria <- cbind.data.frame(AMGC, criteria)
+    criteria <- criteria[criteria$criteria == 1,]
+    criteria_filtered <- data.frame(criteria[!is.na(criteria$criteria),])
+      
+   return(criteria_filtered)
       }
 
   ### FINAL CLASSIFICATION
@@ -1178,15 +1181,15 @@ server <- function(input, output) {
   #### AUTOMATIC VARIANT CLASSIFICATION
       
       AutomClass_reactive <-reactive({Automatic_criteria_AMCG(id = input$id, con = con,  denovo_noconfirmed = input$denovo_noconfirmed, denovo_confirmed = input$denovo_confirmed)})
-      criteria <- renderTable(expr = AutomClass_reactive(),rownames = TRUE, bordered = FALSE)
+      criteria <- renderTable(expr = AutomClass_reactive(),rownames = FALSE, bordered = FALSE)
       output$AutoClass <- criteria
-     
-      
+
+
   #### FINAL VARIANT CLASSIFICATION
-    FinalClass_reactive <-reactive({Final_classification(criteria = AutomClass_reactive$criteria)})
-  #   FinalClass_reactive <-reactive({Final_classificationB(id = input$id, con = con, denovo_noconfirmed = input$denovo_noconfirmed,
-  #                                                         denovo_confirmed = input$denovo_confirmed, cosegregation = input$cosegregation,
-  #                                                         PPAT_evidence = input$PPAT_evidence, PPOL_evidence = input$PPOL_evidence)})
+  #  FinalClass_reactive <-reactive({Final_classification(criteria = AutomClass_reactive$criteria)})
+     FinalClass_reactive <-reactive({Final_classificationB(id = input$id, con = con, denovo_noconfirmed = input$denovo_noconfirmed,
+                                                           denovo_confirmed = input$denovo_confirmed, cosegregation = input$cosegregation,
+                                                           PPAT_evidence = input$PPAT_evidence, PPOL_evidence = input$PPOL_evidence)})
      
      output$FinalClass <- renderTable(expr = FinalClass_reactive(),rownames = TRUE, bordered = FALSE)
 }
