@@ -572,42 +572,22 @@ server <- function(input, output) {
           criteria["BS1_supporting",1][is.na(criteria["BS1_supporting",1])]<-0
         } 
         
-        ###PS2, PM6
         
-        if (denovo_noconfirmed==0){
-          denovo_confirmed<- c(0,0)
-          denovo_noconfirmed <- c(0,0)
-        }
-        else {
-          denovo_confirmed<-c(denovo_confirmed,0)
-          denovo_noconfirmed<-c(denovo_noconfirmed,0)
-        }
-        criteria["PS2_veryStrong",1][denovo_confirmed[1]<2|denovo_noconfirmed[2]<3]<-0
-        criteria[c("PS2_veryStrong","PS2"),1][denovo_confirmed[1]>=2]<-c(1,0)
-        criteria[c("PS2_veryStrong", "PS2"),1][denovo_confirmed[2]>=3]<-c(1,0)
-        criteria[c("PS2_veryStrong","PS2"),1][denovo_confirmed[2]==2&denovo_noconfirmed[1]==1]<-c(1,0)
-        if (criteria["PS2_veryStrong",1]==0){
-          criteria["PS2",1][denovo_confirmed[1]==1]<-1 # PS2 = 1 if there is one occurence with parental confirmation
-          criteria["PS2",1][denovo_confirmed[1]==0]<-0 # PS2 = 0 if there is no one occurence with parental confirmation
-        }
+        ###PS2 - de novo cases reported
         
-        if (denovo_noconfirmed[1]>=4){
-          criteria[c("PM6_veryStrong","PM6"),1]<-c(1,0)
-        }
-        else if (denovo_noconfirmed[1]<4){
-          criteria[c("PM6_veryStrong","PM6"),1]<-c(0,1)
-        }
+        criteria[c("PS2_veryStrong", "PS2"),1][denovo_confirmed>=2]<-c(1,0)
+        criteria[c("PS2_veryStrong", "PS2"),1][denovo_noconfirmed>=3 & denovo_confirmed==1]<-c(1,0)
+        criteria[c("PS2_veryStrong", "PS2"),1][denovo_confirmed==1 & denovo_noconfirmed<3]<-c(0,1)
+        criteria[c("PS2_veryStrong", "PS2"),1][denovo_confirmed==0 & denovo_noconfirmed<3]<-c(0,0)
         
-        if (criteria["PM6_veryStrong",1]==0){
-          criteria[c("PM6_strong","PM6"),1][denovo_noconfirmed==2|denovo_noconfirmed==3]<-1
-          criteria[c("PM6_strong","PM6"),1][denovo_noconfirmed!=2&denovo_noconfirmed!=3]<-0
-        }
-        if (criteria["PM6_strong",1]==0){
-          criteria["PM6",1][denovo_noconfirmed==1]<-1
-          criteria["PM6",1][denovo_noconfirmed!=1]<-0
-        }
+        ###PM6  - de novo cases reported
         
-        ###PP1
+        criteria[c("PM6_veryStrong","PM6_strong","PM6"),1][denovo_noconfirmed>=4]<-c(1,0,0)
+        criteria[c("PM6_veryStrong","PM6_strong","PM6"),1][denovo_noconfirmed>=3 & denovo_noconfirmed>1]<-c(0,1,0)
+        criteria[c("PM6_veryStrong","PM6_strong","PM6"),1][denovo_noconfirmed==1]<-c(0,0,1)
+        criteria[c("PM6_veryStrong","PM6_strong","PM6"),1][denovo_noconfirmed==0]<-c(0,0,0)
+        
+        ###PP1 - cosegregation cases reported
         criteria[c("PP1_strong", "PP1_moderate", "PP1_supporting"),1][cosegregation>=7]<-c(1,0,0)
         criteria[c("PP1_strong", "PP1_moderate", "PP1_supporting"),1][cosegregation==5|cosegregation==6]<-c(0,1,0)
         criteria[c("PP1_strong", "PP1_moderate", "PP1_supporting"),1][cosegregation==3|cosegregation==4]<-c(0,0,1)
@@ -626,38 +606,6 @@ server <- function(input, output) {
 
   ### FINAL CLASSIFICATION
 
-  Final_classification<-function(criteria = criteria){
-    suma_criteria<- data.frame(verystrong_pat=sum(criteria[2,1], criteria[9,1], criteria[37,1]),strong_pat=sum(criteria[1,1], criteria[3:5,1],criteria[8,1], criteria[33,1]),moderate_pat=sum(criteria[6,1],criteria[10:13,1],criteria[15,1],criteria[34,1]), supporting_pat=sum(criteria[16:19,1], criteria[7,1], criteria[35,1]), very_strong_benign=sum(criteria[20,1]), strong_benign=sum(criteria[21:24,1]), support_benign=sum(criteria[25:32,1],criteria[36,1]))
-    
-    classification<- data.frame(PAT=0, Likely_PAT=0, Neutral=0, Likely_Neutral=0, VUS=0)
-    
-    classification$PAT[suma_criteria$verystrong_pat>=1&suma_criteria$strong_pat>=1|
-                         suma_criteria$verystrong_pat>=1&suma_criteria$moderate_pat>=2|
-                         suma_criteria$verystrong_pat>=1&suma_criteria$moderate_pat==1&suma_criteria$supporting_pat==1|
-                         suma_criteria$verystrong_pat>=1&suma_criteria$supporting_pat>=2|
-                         suma_criteria$strong_pat>=2|
-                         suma_criteria$strong_pat==1&suma_criteria$moderate_pat>=3|
-                         suma_criteria$strong_pat==1&suma_criteria$moderate_pat==2&suma_criteria$supporting_pat>=2|
-                         suma_criteria$strong_pat==1&suma_criteria$moderate==1&suma_criteria$supporting_pat>=4]<-1
-    
-    classification$Likely_PAT[suma_criteria$verystrong_pat==1&suma_criteria$moderate_pat==1|
-                                suma_criteria$strong_pat==1&suma_criteria$moderate_pat==1|
-                                suma_criteria$strong_pat==1&suma_criteria$moderate_pat==2|
-                                suma_criteria$strong_pat==1&suma_criteria$supporting_pat>=2|
-                                suma_criteria$moderate_pat>=3|
-                                suma_criteria$moderate_pat==2&suma_criteria$supporting_pat>=2|
-                                suma_criteria$moderate_pat==1&suma_criteria$supporting_pat>=4]<-1
-    
-    classification$Neutral[suma_criteria$very_strong_benign==1|
-                             suma_criteria$strong_benign>=2]<-1
-    
-    classification$Likely_Neutral[suma_criteria$strong_benign&suma_criteria$support_benign==1|
-                                    suma_criteria$support_benign>=2|
-                                    suma_criteria$strong_benign>=1&criteria["BS1",1]==1&suma_criteria$very_strong_benign==0&suma_criteria$supporting_pat==0&suma_criteria$moderate_pat==0&suma_criteria$strong_pat==0&suma_criteria$verystrong_pat==0]<-1
-    classification$VUS[classification$PAT==0&classification$Likely_PAT==0&classification$Neutral==0&classification$Likely_Neutral==0|classification$PAT==1&classification$Neutral==1|classification$PAT==1&classification$Likely_Neutral==1|classification$Likely_PAT==1&classification$Neutral==1|classification$Likely_PAT==1&classification$Likely_Neutral==1]<-1
-    
-    return(classification)
-  }
   Final_classificationB<- function(id = input$id, con = con, denovo_noconfirmed = input$denovo_noconfirmed,
                                      denovo_confirmed = input$denovo_confirmed, cosegregation = input$cosegregation,
                                      PPAT_evidence = input$PPAT_evidence, PPOL_evidence = input$PPOL_evidence){
@@ -1104,45 +1052,22 @@ server <- function(input, output) {
       criteria["BS1_supporting",1][is.na(criteria["BS1_supporting",1])]<-0
     } 
     
-    ###PS2, PM6
+    ###PS2 - de novo cases reported
     
+    criteria[c("PS2_veryStrong", "PS2"),1][denovo_confirmed>=2]<-c(1,0)
+    criteria[c("PS2_veryStrong", "PS2"),1][denovo_noconfirmed>=3 & denovo_confirmed==1]<-c(1,0)
+    criteria[c("PS2_veryStrong", "PS2"),1][denovo_confirmed==1 & denovo_noconfirmed<3]<-c(0,1)
+    criteria[c("PS2_veryStrong", "PS2"),1][denovo_confirmed==0 & denovo_noconfirmed<3]<-c(0,0)
     
-    ###PS2, PM6
+    ###PM6  - de novo cases reported
     
-    if (denovo_noconfirmed==0){
-      denovo_confirmed<- c(0,0)
-      denovo_noconfirmed <- c(0,0)
-    }
-    else {
-      denovo_confirmed<-c(denovo_confirmed,0)
-      denovo_noconfirmed<-c(denovo_noconfirmed,0)
-    }
-    criteria["PS2_veryStrong",1][denovo_confirmed[1]<2|denovo_noconfirmed[2]<3]<-0
-    criteria[c("PS2_veryStrong","PS2"),1][denovo_confirmed[1]>=2]<-c(1,0)
-    criteria[c("PS2_veryStrong", "PS2"),1][denovo_confirmed[2]>=3]<-c(1,0)
-    criteria[c("PS2_veryStrong","PS2"),1][denovo_confirmed[2]==2&denovo_noconfirmed[1]==1]<-c(1,0)
-    if (criteria["PS2_veryStrong",1]==0){
-      criteria["PS2",1][denovo_confirmed[1]==1]<-1 # PS2 = 1 if there is one occurence with parental confirmation
-      criteria["PS2",1][denovo_confirmed[1]==0]<-0 # PS2 = 0 if there is no one occurence with parental confirmation
-    }
+    criteria[c("PM6_veryStrong","PM6_strong","PM6"),1][denovo_noconfirmed>=4]<-c(1,0,0)
+    criteria[c("PM6_veryStrong","PM6_strong","PM6"),1][denovo_noconfirmed>=3 & denovo_noconfirmed>1]<-c(0,1,0)
+    criteria[c("PM6_veryStrong","PM6_strong","PM6"),1][denovo_noconfirmed==1]<-c(0,0,1)
+    criteria[c("PM6_veryStrong","PM6_strong","PM6"),1][denovo_noconfirmed==0]<-c(0,0,0)
     
-    if (denovo_noconfirmed[1]>=4){
-      criteria[c("PM6_veryStrong","PM6"),1]<-c(1,0)
-    }
-    else if (denovo_noconfirmed[1]<4){
-      criteria[c("PM6_veryStrong","PM6"),1]<-c(0,1)
-    }
+    ###PP1 - cosegregation cases reported
     
-    if (criteria["PM6_veryStrong",1]==0){
-      criteria[c("PM6_strong","PM6"),1][denovo_noconfirmed==2|denovo_noconfirmed==3]<-1
-      criteria[c("PM6_strong","PM6"),1][denovo_noconfirmed!=2&denovo_noconfirmed!=3]<-0
-    }
-    if (criteria["PM6_strong",1]==0){
-      criteria["PM6",1][denovo_noconfirmed==1]<-1
-      criteria["PM6",1][denovo_noconfirmed!=1]<-0
-    }
-    
-    ###PP1
     criteria[c("PP1_strong", "PP1_moderate", "PP1_supporting"),1][cosegregation>=7]<-c(1,0,0)
     criteria[c("PP1_strong", "PP1_moderate", "PP1_supporting"),1][cosegregation==5|cosegregation==6]<-c(0,1,0)
     criteria[c("PP1_strong", "PP1_moderate", "PP1_supporting"),1][cosegregation==3|cosegregation==4]<-c(0,0,1)
@@ -1153,11 +1078,18 @@ server <- function(input, output) {
     
     ## final classification
     
-    suma_criteria<- data.frame(verystrong_pat=sum(criteria[2,1], criteria[9,1], criteria[37,1]),strong_pat=sum(criteria[1,1], criteria[3:5,1],criteria[8,1], criteria[33,1]),moderate_pat=sum(criteria[6,1],criteria[10:13,1],criteria[15,1],criteria[34,1]), supporting_pat=sum(criteria[16:19,1], criteria[7,1], criteria[35,1]), very_strong_benign=sum(criteria[20,1]), strong_benign=sum(criteria[21:24,1]), support_benign=sum(criteria[25:32,1],criteria[36,1]))
+    suma_criteria<- data.frame(verystrong_pat=sum(criteria[2,1], criteria[9,1], criteria[37,1]),
+                               strong_pat=sum(criteria[1,1], criteria[3:5,1],criteria[8,1], criteria[33,1]),
+                               moderate_pat=sum(criteria[6,1],criteria[10:13,1],criteria[15,1],criteria[34,1]), 
+                               supporting_pat=sum(criteria[16:19,1], criteria[7,1], criteria[35,1]), 
+                               very_strong_benign=sum(criteria[20,1]), 
+                               strong_benign=sum(criteria[21:24,1]), 
+                               support_benign=sum(criteria[25:32,1],criteria[36,1]))
     
     classification<- data.frame(PAT=0, Likely_PAT=0, Neutral=0, Likely_Neutral=0, VUS=0)
     
-    classification$PAT[suma_criteria$verystrong_pat>=1&suma_criteria$strong_pat>=1|
+    classification$PAT[suma_criteria$verystrong_pat>=1|
+                         suma_criteria$verystrong_pat<1&suma_criteria$strong_pat>=1|
                          suma_criteria$verystrong_pat>=1&suma_criteria$moderate_pat>=2|
                          suma_criteria$verystrong_pat>=1&suma_criteria$moderate_pat==1&suma_criteria$supporting_pat==1|
                          suma_criteria$verystrong_pat>=1&suma_criteria$supporting_pat>=2|
