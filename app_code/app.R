@@ -33,6 +33,9 @@ ui <- fluidPage(
       numericInput(inputId = "denovo_noconfirmed", label = "Number of the novo cases reported, paternity non-confirmed", value = 0, min = 0),
       numericInput(inputId = "denovo_confirmed", label = "Number of the novo cases reported, paternity confirmed", value = 0, min = 0),
       numericInput(inputId = "cosegregation", label = "Number of the cosegregated families reported", value = 0, min = 0),
+      selectInput(inputId = "Functional_evidence", label = "Are functional studies demostrating variant pathogenicity?", 
+                  choices = list("There is no evidence" = 0, 
+                                 "There is Functional_evidence" = 1), selected = 0),
       selectInput(inputId = "PPAT_evidence", label = "Are relevant references demostrating variant pathogenicity?", 
                          choices = list("There is no evidence" = 0, 
                                         "There is PPAT_evidence" = 1), selected = 0),
@@ -129,7 +132,8 @@ server <- function(input, output) {
  Automatic_criteria_AMCG<- function(id = input$id, con = con, denovo_noconfirmed = input$denovo_noconfirmed,
                                          denovo_confirmed = input$denovo_confirmed, cosegregation = input$cosegregation,
                                          PPAT_evidence = as.numeric(as.character(input$PPAT_evidence)), 
-                                         PPOL_evidence = as.numeric(as.character(input$PPOL_evidence))){
+                                         PPOL_evidence = as.numeric(as.character(input$PPOL_evidence)),
+                                         Functional_evidence = as.numeric(as.character(input$Functional_evidence))){
         #dataframe to fill with all criteria (each criteria in one line)
         criteria<-data.frame(criteria=c(rep(NA, 37)), row.names = c("PS1", "PS2_veryStrong", "PS2", "PS3", "PS4_strong", "PS4_moderate", "PS4_supporting", "PM5_strong",  "PM6_veryStrong", "PM6","PM1", "PM2", "PM4",  "PP1_strong", "PP1_moderate", "PP1_supporting", "PP2", "PP3","PP5", "BA1", "BS1", "BS2", "BS3", "BS4", "BP1", "BP2", "BP3", "BP4", "BP5", "BP6", "BP7", "BS1_supporting", "PM6_strong", "PM5", "PM5_supporting", "BP8", "PVS1"))
         
@@ -594,6 +598,9 @@ server <- function(input, output) {
         criteria[c("PP1_strong", "PP1_moderate", "PP1_supporting"),1][cosegregation==3|cosegregation==4]<-c(0,0,1)
         criteria[c("PP1_strong", "PP1_moderate", "PP1_supporting"),1][cosegregation<3]<-c(0,0,0)
         
+        ###PS3 - Functional studies
+        criteria[c("PS3"),1]<-c(Functional_evidence[1])
+        
         ###PP5, BP6
         criteria[c("PP5", "BP6"),1]<-c(PPAT_evidence[1], PPOL_evidence[2])
         
@@ -610,7 +617,8 @@ server <- function(input, output) {
   Final_classificationB<- function(id = input$id, con = con, denovo_noconfirmed = input$denovo_noconfirmed,
                                      denovo_confirmed = input$denovo_confirmed, cosegregation = input$cosegregation,
                                      PPAT_evidence = as.numeric(as.character(input$PPAT_evidence)), 
-                                     PPOL_evidence = as.numeric(as.character(input$PPOL_evidence))){
+                                     PPOL_evidence = as.numeric(as.character(input$PPOL_evidence)),
+                                     Functional_evidence = as.numeric(as.character(input$Functional_evidence))){
     #dataframe to fill with all criteria (each criteria in one line)
     criteria<-data.frame(criteria=c(rep(NA, 37)), row.names = c("PS1", "PS2_veryStrong", "PS2", "PS3", "PS4_strong", "PS4_moderate", "PS4_supporting", "PM5_strong",  "PM6_veryStrong", "PM6","PM1", "PM2", "PM4",  "PP1_strong", "PP1_moderate", "PP1_supporting", "PP2", "PP3","PP5", "BA1", "BS1", "BS2", "BS3", "BS4", "BP1", "BP2", "BP3", "BP4", "BP5", "BP6", "BP7", "BS1_supporting", "PM6_strong", "PM5", "PM5_supporting", "BP8", "PVS1"))
     
@@ -1074,13 +1082,20 @@ server <- function(input, output) {
     criteria[c("PP1_strong", "PP1_moderate", "PP1_supporting"),1][cosegregation==3|cosegregation==4]<-c(0,0,1)
     criteria[c("PP1_strong", "PP1_moderate", "PP1_supporting"),1][cosegregation<3]<-c(0,0,0)
     
+    ###PS3 - Functional studies
+    criteria[c("PS3"),1]<-c(Functional_evidence[1])
+    
+    
     ###PP5, BP6
     criteria[c("PP5", "BP6"),1]<-c(PPAT_evidence[1], PPOL_evidence[2])
+    
+    
+    
     
     ## final classification
     
     suma_criteria<- data.frame(verystrong_pat=sum(criteria[2,1], criteria[9,1], criteria[37,1]),
-                               strong_pat=sum(criteria[1,1], criteria[3:5,1],criteria[8,1], criteria[14,1], criteria[33,1]),
+                               strong_pat=sum(criteria[1,1], criteria[3:5,1], criteria[8,1], criteria[14,1], criteria[33,1]),
                                moderate_pat=sum(criteria[6,1],criteria[10:13,1],criteria[15,1],criteria[34,1]), 
                                supporting_pat=sum(criteria[16:19,1], criteria[7,1], criteria[35,1]), 
                                very_strong_benign=sum(criteria[20,1]), 
@@ -1140,7 +1155,8 @@ server <- function(input, output) {
       AutomClass_reactive <-reactive({Automatic_criteria_AMCG(id = input$id, con = con, denovo_noconfirmed = input$denovo_noconfirmed,
                                                               denovo_confirmed = input$denovo_confirmed, cosegregation = input$cosegregation,
                                                               PPAT_evidence = as.numeric(as.character(input$PPAT_evidence)), 
-                                                              PPOL_evidence = as.numeric(as.character(input$PPOL_evidence)))})
+                                                              PPOL_evidence = as.numeric(as.character(input$PPOL_evidence)),
+                                                              Functional_evidence = as.numeric(as.character(input$Functional_evidence)))})
       criteria <- renderTable(expr = AutomClass_reactive(),rownames = FALSE, bordered = FALSE)
       output$AutoClass <- criteria
 
@@ -1150,10 +1166,11 @@ server <- function(input, output) {
      FinalClass_reactive <-reactive({Final_classificationB(id = input$id, con = con, denovo_noconfirmed = input$denovo_noconfirmed,
                                                            denovo_confirmed = input$denovo_confirmed, cosegregation = input$cosegregation,
                                                            PPAT_evidence = as.numeric(as.character(input$PPAT_evidence)), 
-                                                           PPOL_evidence = as.numeric(as.character(input$PPOL_evidence)))})
+                                                           PPOL_evidence = as.numeric(as.character(input$PPOL_evidence)),
+                                                           Functional_evidence = as.numeric(as.character(input$Functional_evidence)))})
      
      output$FinalClass <- renderTable(expr = FinalClass_reactive(),rownames = TRUE, bordered = FALSE)
-     output$PPAT_evidence <- renderPrint({Input$PPAT_evidence})
+     
 }
      
 
