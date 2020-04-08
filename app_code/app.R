@@ -556,9 +556,9 @@ server <- function(input, output) {
         criteria[c("BS2","PS4_strong", "PS4_moderate", "PS4_supporting"),1][independent_control>=3]<-c(1,0,0,0)
         criteria[c("PS4_strong", "PS4_moderate", "PS4_supporting"),1][affected_independently==0]<-c(0,0,0)
         if (independent_control==0){
-          criteria[c("BS2","PS4_strong","PS4_moderate", "PS4_supporting"),1][affected_independently>=5]<-c(0,1,0,0)
-          criteria[c("BS2","PS4_strong","PS4_moderate", "PS4_supporting"),1][affected_independently==3|affected_independently==4]<-c(0,0,1,0)
-          criteria[c("BS2","PS4_strong","PS4_moderate", "PS4_supporting"),1][affected_independently==2|affected_independently==1]<-c(0,0,0,1)
+          criteria[c("BS2","PS4_strong","PS4_moderate", "PS4_supporting"),1][affected_independently>=6]<-c(0,1,0,0)
+          criteria[c("BS2","PS4_strong","PS4_moderate", "PS4_supporting"),1][affected_independently==4|affected_independently==5]<-c(0,0,1,0)
+          criteria[c("BS2","PS4_strong","PS4_moderate", "PS4_supporting"),1][affected_independently==3|affected_independently==2]<-c(0,0,0,1)
           criteria[c("BS2","PS4_strong","PS4_moderate", "PS4_supporting"),1][affected_independently==0]<-c(0,0,0,0)
         }
         else if (independent_control<3&independent_control>0){
@@ -1041,9 +1041,9 @@ server <- function(input, output) {
     criteria[c("BS2","PS4_strong", "PS4_moderate", "PS4_supporting"),1][independent_control>=3]<-c(1,0,0,0)
     criteria[c("PS4_strong", "PS4_moderate", "PS4_supporting"),1][affected_independently==0]<-c(0,0,0)
     if (independent_control==0){
-      criteria[c("BS2","PS4_strong","PS4_moderate", "PS4_supporting"),1][affected_independently>=5]<-c(0,1,0,0)
-      criteria[c("BS2","PS4_strong","PS4_moderate", "PS4_supporting"),1][affected_independently==3|affected_independently==4]<-c(0,0,1,0)
-      criteria[c("BS2","PS4_strong","PS4_moderate", "PS4_supporting"),1][affected_independently==2|affected_independently==1]<-c(0,0,0,1)
+      criteria[c("BS2","PS4_strong","PS4_moderate", "PS4_supporting"),1][affected_independently>=6]<-c(0,1,0,0)
+      criteria[c("BS2","PS4_strong","PS4_moderate", "PS4_supporting"),1][affected_independently==4|affected_independently==5]<-c(0,0,1,0)
+      criteria[c("BS2","PS4_strong","PS4_moderate", "PS4_supporting"),1][affected_independently==3|affected_independently==2]<-c(0,0,0,1)
       criteria[c("BS2","PS4_strong","PS4_moderate", "PS4_supporting"),1][affected_independently==0]<-c(0,0,0,0)
     }
     else if (independent_control<3&independent_control>0){
