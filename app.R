@@ -15,7 +15,7 @@ ui <- fluidPage(
   # Application title
   tags$br(),
   fluidRow(
-    column(5, tags$img(height = 50, src = "LogoIGTPcolourtransparentENG.png"),offset = 9)
+    column(5, tags$img(height = 80, src = "Cobranding_IGTP_Hospital_ENG.png"),offset = 9)
     )
   ,
   titlePanel(h1("RASopathy-related variant classification", align = "center")),
@@ -120,11 +120,11 @@ server <- function(input, output) {
   #GOF Genes: BRAF, CBL, HRAS, KRAS, LZTR1, NF1, NRAS, MAP2K1, MAP2K2, PTPN11, RAF1, RIT1, SHOC2, SOS1, SOS2, SPRED1 i RASA1,
   
   ##### Calling RASopathies gene information
-  domain_groupRAF <- read.csv("~/GitHub/RASo_variantsClassification/domini_grupRAF.csv")
-  domain_groupRAS <- read.csv("~/GitHub/RASo_variantsClassification/domini_grupRAS.csv")
-  domain_groupSOS <- read.csv("~/GitHub/RASo_variantsClassification/domini_grupSOS.csv")
-  domain_groupMAPK <- read.csv("~/GitHub/RASo_variantsClassification/domini_grupMAPK.csv")
-  Transcripts_RASos <- read.csv("~/GitHub/RASo_variantsClassification/Transcripts_RASos.csv")
+  domain_groupRAF <- read.csv("~/GitHub/RASo_variantsClassification/files/domini_grupRAF.csv")
+  domain_groupRAS <- read.csv("~/GitHub/RASo_variantsClassification/files/domini_grupRAS.csv")
+  domain_groupSOS <- read.csv("~/GitHub/RASo_variantsClassification/files/domini_grupSOS.csv")
+  domain_groupMAPK <- read.csv("~/GitHub/RASo_variantsClassification/files/domini_grupMAPK.csv")
+  Transcripts_RASos <- read.csv("~/GitHub/RASo_variantsClassification/files/Transcripts_RASos.csv")
       
   ####### AUTOMATIC CRITERIA FUNCTION
   
