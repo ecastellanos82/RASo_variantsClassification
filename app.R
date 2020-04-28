@@ -86,7 +86,7 @@ server <- function(input, output) {
   
   ## connection to Pandora DB
   get_db_parameters <- function(db_conf) {
-    params <- read.table("~/GitHub/RASo_variantsClassification/params.csv", sep = ",", stringsAsFactors = FALSE)
+    params <- read.table("params.csv", sep = ",", stringsAsFactors = FALSE)
     return(list(user = params$V2[1],
                 password = params$V2[2],
                 dbname = params$V2[3],
@@ -120,11 +120,11 @@ server <- function(input, output) {
   #GOF Genes: BRAF, CBL, HRAS, KRAS, LZTR1, NF1, NRAS, MAP2K1, MAP2K2, PTPN11, RAF1, RIT1, SHOC2, SOS1, SOS2, SPRED1 i RASA1,
   
   ##### Calling RASopathies gene information
-  domain_groupRAF <- read.csv("~/GitHub/RASo_variantsClassification/files/domini_grupRAF.csv")
-  domain_groupRAS <- read.csv("~/GitHub/RASo_variantsClassification/files/domini_grupRAS.csv")
-  domain_groupSOS <- read.csv("~/GitHub/RASo_variantsClassification/files/domini_grupSOS.csv")
-  domain_groupMAPK <- read.csv("~/GitHub/RASo_variantsClassification/files/domini_grupMAPK.csv")
-  Transcripts_RASos <- read.csv("~/GitHub/RASo_variantsClassification/files/Transcripts_RASos.csv")
+  domain_groupRAF <- read.csv("files/domini_grupRAF.csv")
+  domain_groupRAS <- read.csv("files/domini_grupRAS.csv")
+  domain_groupSOS <- read.csv("files/domini_grupSOS.csv")
+  domain_groupMAPK <- read.csv("files/domini_grupMAPK.csv")
+  Transcripts_RASos <- read.csv("files/Transcripts_RASos.csv")
       
   ####### AUTOMATIC CRITERIA FUNCTION
   
