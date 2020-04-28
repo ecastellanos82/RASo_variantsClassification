@@ -136,7 +136,48 @@ server <- function(input, output) {
                                          Functional_evidence = as.numeric(as.character(input$Functional_evidence))){
         #dataframe to fill with all criteria (each criteria in one line)
         criteria<-data.frame(criteria=c(rep(NA, 37)), row.names = c("PS1", "PS2_veryStrong", "PS2", "PS3", "PS4_strong", "PS4_moderate", "PS4_supporting", "PM5_strong",  "PM6_veryStrong", "PM6","PM1", "PM2", "PM4",  "PP1_strong", "PP1_moderate", "PP1_supporting", "PP2", "PP3","PP5", "BA1", "BS1", "BS2", "BS3", "BS4", "BP1", "BP2", "BP3", "BP4", "BP5", "BP6", "BP7", "BS1_supporting", "PM6_strong", "PM5", "PM5_supporting", "BP8", "PVS1"))
+ 
+        ##new conection
+        ## conection to UCSC
+        my_connection <- dbConnect(
+          MySQL(),
+          user="genome",
+          dbname="hg38",
+          host="genome-euro-mysql.soe.ucsc.edu",
+          port=3306
+        )
         
+        ## connection to Pandora DB
+        get_db_parameters <- function(db_conf) {
+          params <- read.table("params.csv", sep = ",", stringsAsFactors = FALSE)
+          return(list(user = params$V2[1],
+                      password = params$V2[2],
+                      dbname = params$V2[3],
+                      host = params$V2[4],
+                      port = params$V2[5]))
+        }
+        
+        ## connects to the NGS BD using a config file
+        ## param db_conf: a full path to a config file (CSV)
+        
+        db_connect_postgres <- function(db_conf) {
+          drv <- dbDriver("PostgreSQL")
+          
+          db_conf <- get_db_parameters(db_conf)
+          
+          con <- dbConnect(drv,
+                           user = db_conf[['user']],
+                           password = db_conf[['password']],
+                           dbname = db_conf[['dbname']],
+                           host = db_conf[['host']],
+                           port = db_conf[['port']])
+          
+          return(con)
+        }
+        
+        con <- db_connect_postgres('db_pandora.conf')
+        
+        ##new conection
         group_position<-NULL
         num<-NULL
         ### BP1 & PVS1 cirteria. 
@@ -621,6 +662,48 @@ server <- function(input, output) {
                                      Functional_evidence = as.numeric(as.character(input$Functional_evidence))){
     #dataframe to fill with all criteria (each criteria in one line)
     criteria<-data.frame(criteria=c(rep(NA, 37)), row.names = c("PS1", "PS2_veryStrong", "PS2", "PS3", "PS4_strong", "PS4_moderate", "PS4_supporting", "PM5_strong",  "PM6_veryStrong", "PM6","PM1", "PM2", "PM4",  "PP1_strong", "PP1_moderate", "PP1_supporting", "PP2", "PP3","PP5", "BA1", "BS1", "BS2", "BS3", "BS4", "BP1", "BP2", "BP3", "BP4", "BP5", "BP6", "BP7", "BS1_supporting", "PM6_strong", "PM5", "PM5_supporting", "BP8", "PVS1"))
+ 
+    ##new conection
+    ## conection to UCSC
+    my_connection <- dbConnect(
+      MySQL(),
+      user="genome",
+      dbname="hg38",
+      host="genome-euro-mysql.soe.ucsc.edu",
+      port=3306
+    )
+    
+    ## connection to Pandora DB
+    get_db_parameters <- function(db_conf) {
+      params <- read.table("params.csv", sep = ",", stringsAsFactors = FALSE)
+      return(list(user = params$V2[1],
+                  password = params$V2[2],
+                  dbname = params$V2[3],
+                  host = params$V2[4],
+                  port = params$V2[5]))
+    }
+    
+    ## connects to the NGS BD using a config file
+    ## param db_conf: a full path to a config file (CSV)
+    
+    db_connect_postgres <- function(db_conf) {
+      drv <- dbDriver("PostgreSQL")
+      
+      db_conf <- get_db_parameters(db_conf)
+      
+      con <- dbConnect(drv,
+                       user = db_conf[['user']],
+                       password = db_conf[['password']],
+                       dbname = db_conf[['dbname']],
+                       host = db_conf[['host']],
+                       port = db_conf[['port']])
+      
+      return(con)
+    }
+    
+    con <- db_connect_postgres('db_pandora.conf')
+    
+    ##new conection
     
     group_position<-NULL
     num<-NULL
