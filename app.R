@@ -39,15 +39,13 @@ ui <- fluidPage(
       selectInput(inputId = "PPAT_evidence", label = "Are relevant references demostrating variant pathogenicity?", 
                          choices = list("There is no evidence" = 0, 
                                         "There is PPAT_evidence" = 1), selected = 0),
-  #   numericInput(inputId = "PPAT_evidence", label = "Are relevant references demostrating variant pathogenicity? in case of yes = 1",value = 0, min = 0, max = 1),
-  #   numericInput(inputId = "PPOL_evidence", label = "Are relevant references demostrating variant neutrality? in case of yes = 1",value = 0, min = 0, max = 1)
       selectInput(inputId = "PPOL_evidence", label = "Are relevant references demostrating variant neutrality?", 
                         choices = list("There is no evidence" = 0, 
-                             "There is PPOL_evidence" = 1), selected = 0)  
+                             "There is PPOL_evidence" = 1), selected = 0),
+      submitButton("Search", icon("refresh"))
   ), 
     
-    # Show a plot of the generated distribution
-    
+
     mainPanel(
       tags$h4(tags$style('h4 {color:darkblue;}')),
       fluidRow( 
@@ -135,16 +133,12 @@ server <- function(input, output) {
                                          PPOL_evidence = as.numeric(as.character(input$PPOL_evidence)),
                                     Functional_evidence = as.numeric(as.character(input$Functional_evidence))){
 
-     ## @todo: place many of these where needed to avoid connections doing stuff when not needed
-     ##   or implement a goButton instead
-     ## if (is.null(input$id))
-     ##     return(NULL)
+  
      
         #dataframe to fill with all criteria (each criteria in one line)
         criteria<-data.frame(criteria=c(rep(NA, 37)), row.names = c("PS1", "PS2_veryStrong", "PS2", "PS3", "PS4_strong", "PS4_moderate", "PS4_supporting", "PM5_strong",  "PM6_veryStrong", "PM6","PM1", "PM2", "PM4",  "PP1_strong", "PP1_moderate", "PP1_supporting", "PP2", "PP3","PP5", "BA1", "BS1", "BS2", "BS3", "BS4", "BP1", "BP2", "BP3", "BP4", "BP5", "BP6", "BP7", "BS1_supporting", "PM6_strong", "PM5", "PM5_supporting", "BP8", "PVS1"))
  
-        ##nec conection
-        
+
         group_position<-NULL
         num<-NULL
         ### BP1 & PVS1 cirteria. 
@@ -1176,7 +1170,6 @@ server <- function(input, output) {
 
 
   #### FINAL VARIANT CLASSIFICATION
-  #  FinalClass_reactive <-reactive({Final_classification(criteria = AutomClass_reactive$criteria)})
      FinalClass_reactive <-reactive({Final_classificationB(id = input$id, con = con, denovo_noconfirmed = input$denovo_noconfirmed,
                                                            denovo_confirmed = input$denovo_confirmed, cosegregation = input$cosegregation,
                                                            PPAT_evidence = as.numeric(as.character(input$PPAT_evidence)), 
@@ -1186,10 +1179,10 @@ server <- function(input, output) {
     output$FinalClass <- renderTable(expr = FinalClass_reactive(),rownames = TRUE, bordered = FALSE)
 
     ## session end clean up
-    cancel.onSessionEnded <- session$onSessionEnded(function() {
-        RPostgreSQL::dbDisconnect(con)
-        RMySQL::dbDisconnect(my_connection)
-    })
+#    cancel.onSessionEnded <- session$onSessionEnded(function() {
+#        RPostgreSQL::dbDisconnect(con)
+#        RMySQL::dbDisconnect(my_connection)
+ #   })
     
      
 }
