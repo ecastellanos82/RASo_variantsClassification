@@ -71,7 +71,7 @@ ui <- fluidPage(
   ))
 
 # Define server logic required to connect to DB and run all functions to classifiy RASopathy variant
-server <- function(input, output) {
+server <- function(input, output, session) {
   
     ## conection to UCSC
   my_connection <- dbConnect(
@@ -1182,7 +1182,7 @@ server <- function(input, output) {
     cancel.onSessionEnded <- session$onSessionEnded(function() {
         RPostgreSQL::dbDisconnect(con)
         RMySQL::dbDisconnect(my_connection)
-    })
+  })
     
      
 }
