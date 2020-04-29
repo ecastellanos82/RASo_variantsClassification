@@ -1171,7 +1171,7 @@ server <- function(input, output, session) {
 
 
   #### FINAL VARIANT CLASSIFICATION
-     FinalClass_reactive <-eventReactive(input$go,{Final_classificationB(id = input$id, con = con, denovo_noconfirmed = input$denovo_noconfirmed,
+     FinalClass_reactive <-reactive({Final_classificationB(id = input$id, con = con, denovo_noconfirmed = input$denovo_noconfirmed,
                                                            denovo_confirmed = input$denovo_confirmed, cosegregation = input$cosegregation,
                                                            PPAT_evidence = as.numeric(as.character(input$PPAT_evidence)), 
                                                            PPOL_evidence = as.numeric(as.character(input$PPOL_evidence)),
