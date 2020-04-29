@@ -42,7 +42,7 @@ ui <- fluidPage(
       selectInput(inputId = "PPOL_evidence", label = "Are relevant references demostrating variant neutrality?", 
                         choices = list("There is no evidence" = 0, 
                              "There is PPOL_evidence" = 1), selected = 0),
-      submitButton("Search", icon("refresh"))
+      actionButton("go", "Search")
   ), 
     
 
@@ -1145,7 +1145,7 @@ server <- function(input, output, session) {
   
   #### VARIANT CONFIRMATION
      
-      variant_reactive <- reactive({(dbGetQuery(con, (bp1.1<-paste('SELECT "cDNAAnnotation", "proteinAnnotation", "symbol","validatedEffect", "effect"
+      variant_reactive <- eventReactive(input$go,{(dbGetQuery(con, (bp1.1<-paste('SELECT "cDNAAnnotation", "proteinAnnotation", "symbol","validatedEffect", "effect"
                               FROM "VA_VariantsInTranscripts" AS a
                               LEFT OUTER JOIN "UniqueVariantsInGenome" AS b
                               ON a."uniqueVariantId"=b."uniqueVariantId"
@@ -1156,11 +1156,12 @@ server <- function(input, output, session) {
                               WHERE a."uniqueVariantId"=', input$id, 'AND 
                               a."isMainTranscript"=\'TRUE\' AND d."symbol"<> \'NA\' ORDER BY a."date" DESC LIMIT 1'))))})
       output$Variant <- renderTable(expr = variant_reactive(), rownames = TRUE, bordered = FALSE)
-    
+      
   
   #### AUTOMATIC VARIANT CLASSIFICATION
-      
-      AutomClass_reactive <-reactive({Automatic_criteria_AMCG(id = input$id, con = con, denovo_noconfirmed = input$denovo_noconfirmed,
+  
+        
+      AutomClass_reactive <-eventReactive(input$go,{Automatic_criteria_AMCG(id = input$id, con = con, denovo_noconfirmed = input$denovo_noconfirmed,
                                                               denovo_confirmed = input$denovo_confirmed, cosegregation = input$cosegregation,
                                                               PPAT_evidence = as.numeric(as.character(input$PPAT_evidence)), 
                                                               PPOL_evidence = as.numeric(as.character(input$PPOL_evidence)),
@@ -1170,7 +1171,7 @@ server <- function(input, output, session) {
 
 
   #### FINAL VARIANT CLASSIFICATION
-     FinalClass_reactive <-reactive({Final_classificationB(id = input$id, con = con, denovo_noconfirmed = input$denovo_noconfirmed,
+     FinalClass_reactive <-eventReactive(input$go,{Final_classificationB(id = input$id, con = con, denovo_noconfirmed = input$denovo_noconfirmed,
                                                            denovo_confirmed = input$denovo_confirmed, cosegregation = input$cosegregation,
                                                            PPAT_evidence = as.numeric(as.character(input$PPAT_evidence)), 
                                                            PPOL_evidence = as.numeric(as.character(input$PPOL_evidence)),
