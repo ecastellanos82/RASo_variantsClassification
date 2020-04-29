@@ -29,7 +29,7 @@ ui <- fluidPage(
       helpText("Please, indicate the variant's identifier at Pandora
                [ctl + shift + j]"),
       
-      textInput(inputId = "id", label = "Specify variant ID in Pandora"),
+      textInput(inputId = "id", value = '13111', label = "Specify variant ID in Pandora"),
       numericInput(inputId = "denovo_noconfirmed", label = "Number of the novo cases reported, paternity non-confirmed", value = 0, min = 0),
       numericInput(inputId = "denovo_confirmed", label = "Number of the novo cases reported, paternity confirmed", value = 0, min = 0),
       numericInput(inputId = "cosegregation", label = "Number of the cosegregated families reported", value = 0, min = 0),
@@ -42,7 +42,7 @@ ui <- fluidPage(
       selectInput(inputId = "PPOL_evidence", label = "Are relevant references demostrating variant neutrality?", 
                         choices = list("There is no evidence" = 0, 
                              "There is PPOL_evidence" = 1), selected = 0),
-      submitButton("Search", icon("refresh"))
+      submitButton("Search", icon("refresh")) ## @todo make dependencies on this button please
   ), 
     
 
