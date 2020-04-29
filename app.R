@@ -1179,10 +1179,10 @@ server <- function(input, output) {
     output$FinalClass <- renderTable(expr = FinalClass_reactive(),rownames = TRUE, bordered = FALSE)
 
     ## session end clean up
-#    cancel.onSessionEnded <- session$onSessionEnded(function() {
-#        RPostgreSQL::dbDisconnect(con)
-#        RMySQL::dbDisconnect(my_connection)
- #   })
+    cancel.onSessionEnded <- session$onSessionEnded(function() {
+        RPostgreSQL::dbDisconnect(con)
+        RMySQL::dbDisconnect(my_connection)
+    })
     
      
 }
