@@ -132,8 +132,14 @@ server <- function(input, output, session) {
                                          PPAT_evidence = as.numeric(as.character(input$PPAT_evidence)), 
                                          PPOL_evidence = as.numeric(as.character(input$PPOL_evidence)),
                                     Functional_evidence = as.numeric(as.character(input$Functional_evidence))){
-   if (is.null(input$id))
+  
+    if (is.null(input$id) | is.null (input$denovo_noconfirmed) |
+       is.null (input$denovo_confirmed) |
+       is.null(input$cosegregation) | is.null (input$PPAT_evidence) |
+       is.null (input$PPOL_evidence) | is.null(input$Functional_evidence)) {
+     ## nothing to do here
      return(NULL)
+   }
   
      
         #dataframe to fill with all criteria (each criteria in one line)
@@ -623,8 +629,13 @@ server <- function(input, output, session) {
                                      PPOL_evidence = as.numeric(as.character(input$PPOL_evidence)),
                                    Functional_evidence = as.numeric(as.character(input$Functional_evidence))){
 
-    if (is.null(input$id))
-           return(NULL)
+    if (is.null(input$id) | is.null (input$denovo_noconfirmed) |
+        is.null (input$denovo_confirmed) |
+        is.null(input$cosegregation) | is.null (input$PPAT_evidence) |
+        is.null (input$PPOL_evidence) | is.null(input$Functional_evidence)) {
+      ## nothing to do here
+      return(NULL)
+    }
       
     #dataframe to fill with all criteria (each criteria in one line)
     criteria<-data.frame(criteria=c(rep(NA, 37)), row.names = c("PS1", "PS2_veryStrong", "PS2", "PS3", "PS4_strong", "PS4_moderate", "PS4_supporting", "PM5_strong",  "PM6_veryStrong", "PM6","PM1", "PM2", "PM4",  "PP1_strong", "PP1_moderate", "PP1_supporting", "PP2", "PP3","PP5", "BA1", "BS1", "BS2", "BS3", "BS4", "BP1", "BP2", "BP3", "BP4", "BP5", "BP6", "BP7", "BS1_supporting", "PM6_strong", "PM5", "PM5_supporting", "BP8", "PVS1"))
@@ -1160,7 +1171,9 @@ server <- function(input, output, session) {
   #### AUTOMATIC VARIANT CLASSIFICATION
   
         
-      AutomClass_reactive <-eventReactive(input$go,{Automatic_criteria_AMCG(id = input$id, con = con, denovo_noconfirmed = input$denovo_noconfirmed,
+      AutomClass_reactive <-eventReactive(c(input$go, input$id, input$denovo_noconfirmed, input$denovo_confirmed, input$cosegregation,
+                                            input$PPAT_evidence,input$PPOL_evidence, input$Functional_evidence),
+                                          {Automatic_criteria_AMCG(id = input$id, con = con, denovo_noconfirmed = input$denovo_noconfirmed,
                                                               denovo_confirmed = input$denovo_confirmed, cosegregation = input$cosegregation,
                                                               PPAT_evidence = as.numeric(as.character(input$PPAT_evidence)), 
                                                               PPOL_evidence = as.numeric(as.character(input$PPOL_evidence)),
@@ -1171,13 +1184,17 @@ server <- function(input, output, session) {
 
   #### FINAL VARIANT CLASSIFICATION
      
-     FinalClass_reactive <-eventReactive(input$go,{Final_classificationB(id = input$id, con = con, denovo_noconfirmed = input$denovo_noconfirmed,
+     FinalClass_reactive <-eventReactive(c(input$go, input$id, input$denovo_noconfirmed, input$denovo_confirmed, input$cosegregation,
+                                           input$PPAT_evidence,input$PPOL_evidence, input$Functional_evidence),
+                                         {Final_classificationB(id = input$id, con = con, denovo_noconfirmed = input$denovo_noconfirmed,
                                                            denovo_confirmed = input$denovo_confirmed, cosegregation = input$cosegregation,
                                                            PPAT_evidence = as.numeric(as.character(input$PPAT_evidence)), 
                                                            PPOL_evidence = as.numeric(as.character(input$PPOL_evidence)),
                                                            Functional_evidence = as.numeric(as.character(input$Functional_evidence)))})
      
-    output$FinalClass <- renderTable(expr = FinalClass_reactive(),rownames = TRUE, bordered = FALSE)
+  
+                                 
+     output$FinalClass <- renderTable(expr = FinalClass_reactive(),rownames = TRUE, bordered = FALSE)
 
     ## session end clean up
     cancel.onSessionEnded <- session$onSessionEnded(function() {
