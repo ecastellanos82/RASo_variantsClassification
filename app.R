@@ -66,9 +66,10 @@ ui <- fluidPage(
      fluidRow( 
      column(9, tags$h4("Variant classification following ACMG guidelines"), offset = 2),
      column(9, tableOutput("FinalClass"), offset = 2)
-   )
+     )
     )
-  ))
+  )
+)
 
 # Define server logic required to connect to DB and run all functions to classifiy RASopathy variant
 server <- function(input, output, session) {
@@ -132,11 +133,11 @@ server <- function(input, output, session) {
                                          PPAT_evidence = as.numeric(as.character(input$PPAT_evidence)), 
                                          PPOL_evidence = as.numeric(as.character(input$PPOL_evidence)),
                                     Functional_evidence = as.numeric(as.character(input$Functional_evidence))){
-  
-    if (is.null(input$id) | is.null (input$denovo_noconfirmed) |
-       is.null (input$denovo_confirmed) |
+   
+   if (is.null(input$id) | is.null (input$denovo_noconfirmed) |
        is.null(input$cosegregation) | is.null (input$PPAT_evidence) |
-       is.null (input$PPOL_evidence) | is.null(input$Functional_evidence)) {
+       is.null (input$PPOL_evidence) | is.null(input$Functional_evidence) | input$go == 0) {
+     
      ## nothing to do here
      return(NULL)
    }
@@ -630,9 +631,9 @@ server <- function(input, output, session) {
                                    Functional_evidence = as.numeric(as.character(input$Functional_evidence))){
 
     if (is.null(input$id) | is.null (input$denovo_noconfirmed) |
-        is.null (input$denovo_confirmed) |
         is.null(input$cosegregation) | is.null (input$PPAT_evidence) |
-        is.null (input$PPOL_evidence) | is.null(input$Functional_evidence)) {
+        is.null (input$PPOL_evidence) | is.null(input$Functional_evidence) | input$go == 0) {
+      
       ## nothing to do here
       return(NULL)
     }
@@ -1155,7 +1156,13 @@ server <- function(input, output, session) {
   
   #### VARIANT CONFIRMATION
      
-      variant_reactive <- eventReactive(input$go,{(dbGetQuery(con, (bp1.1<-paste('SELECT "cDNAAnnotation", "proteinAnnotation", "symbol","validatedEffect", "effect"
+      variant_reactive <- eventReactive(c(input$go, input$id),
+                                       
+                                       if (input$go == 0){
+                                         return(NULL)
+                                       }
+                                       else {
+                              (dbGetQuery(con, (bp1.1<-paste('SELECT "cDNAAnnotation", "proteinAnnotation", "symbol","validatedEffect", "effect"
                               FROM "VA_VariantsInTranscripts" AS a
                               LEFT OUTER JOIN "UniqueVariantsInGenome" AS b
                               ON a."uniqueVariantId"=b."uniqueVariantId"
@@ -1165,33 +1172,45 @@ server <- function(input, output, session) {
                               ON c."transcriptId"=d."mainTranscriptId"
                               WHERE a."uniqueVariantId"=', input$id, 'AND 
                               a."isMainTranscript"=\'TRUE\' AND d."symbol"<> \'NA\' ORDER BY a."date" DESC LIMIT 1'))))})
+      
+      
       output$Variant <- renderTable(expr = variant_reactive(), rownames = TRUE, bordered = FALSE)
       
   
   #### AUTOMATIC VARIANT CLASSIFICATION
   
         
-      AutomClass_reactive <-eventReactive(c(input$go, input$id, input$denovo_noconfirmed, input$denovo_confirmed, input$cosegregation,
-                                            input$PPAT_evidence,input$PPOL_evidence, input$Functional_evidence),
+      AutomClass_reactive <-eventReactive(c(input$go, input$id),
+                                          if (input$go == 0){
+                                            return(NULL)
+                                          }
+                                          else 
                                           {Automatic_criteria_AMCG(id = input$id, con = con, denovo_noconfirmed = input$denovo_noconfirmed,
                                                               denovo_confirmed = input$denovo_confirmed, cosegregation = input$cosegregation,
                                                               PPAT_evidence = as.numeric(as.character(input$PPAT_evidence)), 
                                                               PPOL_evidence = as.numeric(as.character(input$PPOL_evidence)),
                                                               Functional_evidence = as.numeric(as.character(input$Functional_evidence)))})
+      
+      # c(input$go, input$id, input$denovo_noconfirmed, input$denovo_confirmed, input$cosegregation,
+      #   input$PPAT_evidence,input$PPOL_evidence, input$Functional_evidence
       criteria <- renderTable(expr = AutomClass_reactive(),rownames = FALSE, bordered = FALSE)
       output$AutoClass <- criteria
 
 
   #### FINAL VARIANT CLASSIFICATION
      
-     FinalClass_reactive <-eventReactive(c(input$go, input$id, input$denovo_noconfirmed, input$denovo_confirmed, input$cosegregation,
-                                           input$PPAT_evidence,input$PPOL_evidence, input$Functional_evidence),
+     FinalClass_reactive <-eventReactive(c(input$go, input$id),
+                                         if (input$go == 0){
+                                           return(NULL)
+                                         }
+                                         else 
                                          {Final_classificationB(id = input$id, con = con, denovo_noconfirmed = input$denovo_noconfirmed,
                                                            denovo_confirmed = input$denovo_confirmed, cosegregation = input$cosegregation,
                                                            PPAT_evidence = as.numeric(as.character(input$PPAT_evidence)), 
                                                            PPOL_evidence = as.numeric(as.character(input$PPOL_evidence)),
                                                            Functional_evidence = as.numeric(as.character(input$Functional_evidence)))})
-     
+    # c(input$go, input$id, input$denovo_noconfirmed, input$denovo_confirmed, input$cosegregation,
+    #   input$PPAT_evidence,input$PPOL_evidence, input$Functional_evidence
   
                                  
      output$FinalClass <- renderTable(expr = FinalClass_reactive(),rownames = TRUE, bordered = FALSE)
