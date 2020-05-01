@@ -132,7 +132,8 @@ server <- function(input, output, session) {
                                          PPAT_evidence = as.numeric(as.character(input$PPAT_evidence)), 
                                          PPOL_evidence = as.numeric(as.character(input$PPOL_evidence)),
                                     Functional_evidence = as.numeric(as.character(input$Functional_evidence))){
-
+   if (is.null(input$id))
+     return(NULL)
   
      
         #dataframe to fill with all criteria (each criteria in one line)
@@ -622,10 +623,8 @@ server <- function(input, output, session) {
                                      PPOL_evidence = as.numeric(as.character(input$PPOL_evidence)),
                                    Functional_evidence = as.numeric(as.character(input$Functional_evidence))){
 
-      ## @todo: place many of these where needed to avoid connections doing stuff when not needed
-      ##   or implement a goButton instead
-      ## if (is.null(input$id))
-      ##     return(NULL)
+    if (is.null(input$id))
+           return(NULL)
       
     #dataframe to fill with all criteria (each criteria in one line)
     criteria<-data.frame(criteria=c(rep(NA, 37)), row.names = c("PS1", "PS2_veryStrong", "PS2", "PS3", "PS4_strong", "PS4_moderate", "PS4_supporting", "PM5_strong",  "PM6_veryStrong", "PM6","PM1", "PM2", "PM4",  "PP1_strong", "PP1_moderate", "PP1_supporting", "PP2", "PP3","PP5", "BA1", "BS1", "BS2", "BS3", "BS4", "BP1", "BP2", "BP3", "BP4", "BP5", "BP6", "BP7", "BS1_supporting", "PM6_strong", "PM5", "PM5_supporting", "BP8", "PVS1"))
