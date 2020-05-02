@@ -1180,7 +1180,8 @@ server <- function(input, output, session) {
   #### AUTOMATIC VARIANT CLASSIFICATION
   
         
-      AutomClass_reactive <-eventReactive(c(input$go, input$id),
+      AutomClass_reactive <-eventReactive(c(input$go, input$id, input$denovo_noconfirmed, input$denovo_confirmed, input$cosegregation,
+                                            input$PPAT_evidence,input$PPOL_evidence, input$Functional_evidence),
                                           if (input$go == 0){
                                             return(NULL)
                                           }
@@ -1191,15 +1192,14 @@ server <- function(input, output, session) {
                                                               PPOL_evidence = as.numeric(as.character(input$PPOL_evidence)),
                                                               Functional_evidence = as.numeric(as.character(input$Functional_evidence)))})
       
-      # c(input$go, input$id, input$denovo_noconfirmed, input$denovo_confirmed, input$cosegregation,
-      #   input$PPAT_evidence,input$PPOL_evidence, input$Functional_evidence
       criteria <- renderTable(expr = AutomClass_reactive(),rownames = FALSE, bordered = FALSE)
       output$AutoClass <- criteria
 
 
   #### FINAL VARIANT CLASSIFICATION
      
-     FinalClass_reactive <-eventReactive(c(input$go, input$id),
+     FinalClass_reactive <-eventReactive(c(input$go, input$id, input$denovo_noconfirmed, input$denovo_confirmed, input$cosegregation,
+                                           input$PPAT_evidence,input$PPOL_evidence, input$Functional_evidence),
                                          if (input$go == 0){
                                            return(NULL)
                                          }
@@ -1209,8 +1209,7 @@ server <- function(input, output, session) {
                                                            PPAT_evidence = as.numeric(as.character(input$PPAT_evidence)), 
                                                            PPOL_evidence = as.numeric(as.character(input$PPOL_evidence)),
                                                            Functional_evidence = as.numeric(as.character(input$Functional_evidence)))})
-    # c(input$go, input$id, input$denovo_noconfirmed, input$denovo_confirmed, input$cosegregation,
-    #   input$PPAT_evidence,input$PPOL_evidence, input$Functional_evidence
+
   
                                  
      output$FinalClass <- renderTable(expr = FinalClass_reactive(),rownames = TRUE, bordered = FALSE)
