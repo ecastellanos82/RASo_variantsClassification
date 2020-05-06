@@ -134,7 +134,7 @@ server <- function(input, output, session) {
                                          PPOL_evidence = as.numeric(as.character(input$PPOL_evidence)),
                                     Functional_evidence = as.numeric(as.character(input$Functional_evidence))){
    
-   if (is.null(input$id) | is.null (input$denovo_noconfirmed) |
+   if (is.null(input$id) | is.null (input$denovo_noconfirmed) | is.null (input$denovo_confirmed) |
        is.null(input$cosegregation) | is.null (input$PPAT_evidence) |
        is.null (input$PPOL_evidence) | is.null(input$Functional_evidence) | input$go == 0) {
      
@@ -142,6 +142,45 @@ server <- function(input, output, session) {
      return(NULL)
    }
   
+   
+   ## conection to UCSC
+   my_connection <- dbConnect(
+     MySQL(),
+     user="genome",
+     dbname="hg38",
+     host="genome-euro-mysql.soe.ucsc.edu",
+     port=3306
+   )
+   
+   ## connection to Pandora DB
+   get_db_parameters <- function(db_conf) {
+     params <- read.table("params.csv", sep = ",", stringsAsFactors = FALSE)
+     return(list(user = params$V2[1],
+                 password = params$V2[2],
+                 dbname = params$V2[3],
+                 host = params$V2[4],
+                 port = params$V2[5]))
+   }
+   
+   ## connects to the NGS BD using a config file
+   ## param db_conf: a full path to a config file (CSV)
+   
+   db_connect_postgres <- function(db_conf) {
+     drv <- dbDriver("PostgreSQL")
+     
+     db_conf <- get_db_parameters(db_conf)
+     
+     con <- dbConnect(drv,
+                      user = db_conf[['user']],
+                      password = db_conf[['password']],
+                      dbname = db_conf[['dbname']],
+                      host = db_conf[['host']],
+                      port = db_conf[['port']])
+     
+     return(con)
+   }
+   
+   con <- db_connect_postgres('db_pandora.conf')
      
         #dataframe to fill with all criteria (each criteria in one line)
         criteria<-data.frame(criteria=c(rep(NA, 37)), row.names = c("PS1", "PS2_veryStrong", "PS2", "PS3", "PS4_strong", "PS4_moderate", "PS4_supporting", "PM5_strong",  "PM6_veryStrong", "PM6","PM1", "PM2", "PM4",  "PP1_strong", "PP1_moderate", "PP1_supporting", "PP2", "PP3","PP5", "BA1", "BS1", "BS2", "BS3", "BS4", "BP1", "BP2", "BP3", "BP4", "BP5", "BP6", "BP7", "BS1_supporting", "PM6_strong", "PM5", "PM5_supporting", "BP8", "PVS1"))
@@ -162,6 +201,13 @@ server <- function(input, output, session) {
                      LEFT OUTER JOIN "Genes" AS d
                      ON c."transcriptId"=d."mainTranscriptId"
                      WHERE a."uniqueVariantId"=', id, 'AND a."isMainTranscript"=\'TRUE\' AND d."symbol"<> \'NA\' ORDER BY a."date" DESC LIMIT 1') #obtenim les coordenades, el cromosoma, l'efecte i el gen de la nostra variant. 
+        
+        if (is.null(id)) {
+          
+          ## nothing to do here
+          return(NULL)
+        }
+        
         bp1<-dbGetQuery(con, bp1.1)
         gen<-bp1[1,"symbol"]
         
@@ -192,6 +238,13 @@ server <- function(input, output, session) {
         ps1_aa<-paste('SELECT "cDNAAnnotation", "proteinAnnotation", "transcriptId"
                       FROM "VA_VariantsInTranscripts"
                       WHERE "isMainTranscript"=\'TRUE\' AND "uniqueVariantId"=', id, 'ORDER BY date DESC LIMIT 1')
+        
+        if (is.null(id)) {
+          
+          ## nothing to do here
+          return(NULL)
+        }
+        
         ps1_a<-dbGetQuery(con, ps1_aa) 
         cdna<-unlist(strsplit(ps1_a$cDNAAnnotation,">")) #it separates the text string when it encounters ">"
         cdna<-paste(cdna[1], "%", sep="") #add "%" to the first element of the string, to search for any pattern that starts with cdna[1] followed by anything.
@@ -310,6 +363,13 @@ server <- function(input, output, session) {
                          LEFT OUTER JOIN "VA_CustomClassification"
                          ON "VA_VariantsInTranscripts"."uniqueVariantId"="VA_CustomClassification"."uniqueVariantId"
                          WHERE "VA_VariantsInTranscripts"."transcriptId"=', ps1_a$transcriptId,'AND "VA_VariantsInTranscripts"."cDNAAnnotation" LIKE \'',cdna,'\' AND "VA_VariantsInTranscripts"."proteinAnnotation"<>\'', ps1_a$proteinAnnotation, '\'AND "VA_VariantsInTranscripts"."isMainTranscript"=\'TRUE\' AND "VA_VariantsInTranscripts"."uniqueVariantId" <>', id,'', sep="")
+        
+        if (is.null(id)) {
+          
+          ## nothing to do here
+          return(NULL)
+        }
+        
         pm5.1<-dbGetQuery(con, join_pm5)
         if(!is.na(ps1_a$proteinAnnotation)& bp1$effect!="synonymous SNV"){
           prot_sense<-ps1_a$proteinAnnotation
@@ -323,7 +383,14 @@ server <- function(input, output, session) {
                                 ON "VA_VariantsInTranscripts"."uniqueVariantId"="VA_CustomClassification"."uniqueVariantId"
                                 WHERE "VA_VariantsInTranscripts"."transcriptId"=', ps1_a$transcriptId,'AND "VA_VariantsInTranscripts"."proteinAnnotation" LIKE ',prot_cerca,'AND "VA_VariantsInTranscripts"."uniqueVariantId" <>', id,'', sep="")
               
-              pm5.1b<-dbGetQuery(con, join_pm5b)
+             
+              if (is.null(id)) {
+                
+                ## nothing to do here
+                return(NULL)
+              }
+              
+               pm5.1b<-dbGetQuery(con, join_pm5b)
               duplicatsb<-duplicated(pm5.1b$uniqueVariantId)
               pm5.2b<-NULL
               for (i in 1:nrow(pm5.1b)){ # it removes duplicate entries
@@ -372,6 +439,13 @@ server <- function(input, output, session) {
                            LEFT OUTER JOIN "VA_CustomClassification"
                            ON "VA_VariantsInTranscripts"."uniqueVariantId"="VA_CustomClassification"."uniqueVariantId"
                            WHERE "VA_VariantsInTranscripts"."transcriptId"=',Transcripts_RASos[gen,1], 'AND  "VA_VariantsInTranscripts"."proteinAnnotation"LIKE\'', group_position2[1], '\'AND "VA_VariantsInTranscripts"."proteinAnnotation"<>\'', ps1_a$proteinAnnotation, '\' AND "VA_VariantsInTranscripts"."isMainTranscript"=\'TRUE\' AND "VA_VariantsInTranscripts"."uniqueVariantId" <>', id,' ORDER BY "VA_CustomClassification".date', sep="")
+          
+          if (is.null(id)) {
+            
+            ## nothing to do here
+            return(NULL)
+          }
+          
           pm5_analogs_groups<-dbGetQuery(con,join_pm5)
           #loop to detect if analog groups and aa_change are equal and pathogenic PM1 = 1, and also to see if aa is different and pathogenic, then PM5 = 1
           pm5<-sum(pm5_analogs_groups$classification=="pat"|pm5_analogs_groups$classification=="ppat")
@@ -384,6 +458,13 @@ server <- function(input, output, session) {
                              LEFT OUTER JOIN "VA_CustomClassification"
                              ON "VA_VariantsInTranscripts"."uniqueVariantId"="VA_CustomClassification"."uniqueVariantId"
                              WHERE "VA_VariantsInTranscripts"."transcriptId"=',Transcripts_RASos[gen,2],'AND "VA_VariantsInTranscripts"."proteinAnnotation"LIKE\'', group_position2[1], '\'AND  "VA_VariantsInTranscripts"."proteinAnnotation"LIKE\'', group_position2[2], '\'AND "VA_VariantsInTranscripts"."isMainTranscript"=\'TRUE\' AND "VA_VariantsInTranscripts"."uniqueVariantId" <>', id,'', sep="")
+            
+            if (is.null(id)) {
+              
+              ## nothing to do here
+              return(NULL)
+            }
+            
             pm5_analogs_groups2<-dbGetQuery(con,join_pm5)
             criteria["PM5_supporting",1][pm5_analogs_groups2$classification=="pat"|pm5_analogs_groups2$classification=="ppat"]<-1 #assignem 1 si ?s pat o ppat
             bp8<-sum(pm5_analogs_groups2$classification=="pol"|pm5_analogs_groups2$classification=="ppol")
@@ -470,7 +551,14 @@ server <- function(input, output, session) {
                        LEFT OUTER JOIN "TranscriptsPosition" as d
                        ON d."transcriptId"=c."transcriptId"
                        WHERE a."uniqueVariantId"=', id, 'AND a."isMainTranscript"=\'TRUE\' ORDER BY c."date" DESC LIMIT 1') #it gets information about the coordinates of start, end, effect and the string in which the gene is.
-          pm4<-dbGetQuery(con, pm4.1)
+         
+          if (is.null(id)) {
+            
+            ## nothing to do here
+            return(NULL)
+          }
+          
+           pm4<-dbGetQuery(con, pm4.1)
           criteria["PM4", 1][pm4$validatedEffect!="frameshift"]<-0 # PM4 = 0 if variant is not a frameshift
           criteria["BP3", 1][!pm4$validatedEffect %in% "in frame"]<-0 #BP3 = 0 if it is in frames
           if(!is.na(pm4$validatedEffect)){
@@ -497,6 +585,13 @@ server <- function(input, output, session) {
                       LEFT OUTER JOIN "VA_VariantNomenclature"
                       ON "VA_VariantsInTranscripts"."uniqueVariantId"="VA_VariantNomenclature"."uniqueVariantId"
                       WHERE "VA_VariantsInTranscripts"."uniqueVariantId"=', id, 'AND "isMainTranscript"=\'TRUE\' ORDER BY "VA_VariantsInTranscripts"."date" DESC LIMIT 1') # AND "validatedEffect"<> \'<NA>\' li diem que validated effect no sigui NA
+        
+        if (is.null(id)) {
+          
+          ## nothing to do here
+          return(NULL)
+        }
+        
         pp2<-dbGetQuery(con, pp2.1)
         efecte_validat<-pp2$validatedEffect[!is.na(pp2$validatedEffect)]
         efecte_novalidat<-pp2$effect[!is.na(pp2$effect)]
@@ -526,6 +621,13 @@ server <- function(input, output, session) {
                       ON "VA_VariantsInTranscripts"."uniqueVariantId"= a."uniqueVariantId"
                       WHERE "VA_VariantsInTranscripts"."uniqueVariantId"=', id, 'AND
                       "isMainTranscript"=\'TRUE\' ORDER BY a."date" DESC LIMIT 1')
+        
+        if (is.null(id)) {
+          
+          ## nothing to do here
+          return(NULL)
+        }
+        
         pp3<-dbGetQuery(con, pp3.1)
         pp3$CADD_phred[pp3$CADD_phred>19]<-"D"
         pp3$CADD_phred[pp3$CADD_phred<10]<-"N"
@@ -559,6 +661,13 @@ server <- function(input, output, session) {
                      LEFT OUTER JOIN "GeneCascade" AS f
                      ON f."id" = e."geneCascadeId"
                      WHERE a."id"=', id,'')
+        
+        if (is.null(id)) {
+          
+          ## nothing to do here
+          return(NULL)
+        }
+        
         bs2<-dbGetQuery(con, bs2.1)
         independent_control<-sum(bs2$name!="NF1_SPRED1"&bs2$name!="Rasopathies"|is.na(bs2$name))
         affected_independently<-sum(bs2$name=="NF1_SPRED1"&!is.na(bs2$name)|bs2$name=="Rasopathies"&!is.na(bs2$name))
@@ -581,7 +690,19 @@ server <- function(input, output, session) {
         criteria["PM2",1][criteria["PM2",1]==1&independent_control>100]<-0 # independently that Pandora says variant is not described in population databases, if the variant is detected in more than 100 samples analyzed in Pandora and not showing RASopathy-like phentoype, and then used as control individuals, PM2 = 0
         inhousefreq<-paste('SELECT "freqs","inHouseFrequency","inHouseNumber" FROM "VA_InHouseFrequencies" WHERE "uniqueVariantId"=', id,'ORDER BY "date" DESC LIMIT 1') # it takes the most updated frequency information of the variant of interest
         inhouse<-dbGetQuery(con,inhousefreq)
+        
+        if (is.null(inhousefreq)) {
+          
+          ## nothing to do here
+          return(NULL)
+        }
+        
         if (is.na(BA1$PopFreqMax)){
+          if (is.null(independent_control)) {
+            
+            ## nothing to do here
+            return(NULL)
+          }
           criteria["BS1",1][independent_control>=1000&inhouse$inHouseFrequency[1]>=0.30]<-1 #independently that Pandora says variant is not described in population databases, if the variant is detected in more than 1000 samples analyzed in Pandora and not showing RASopathy-like phentoype, and then used as control individuals or in house-frequency >0,30, BS1 = 1
           criteria["BS1_supporting",1][independent_control>500&independent_control<1000&inhouse$inHouseFrequency[1]>0.10&inhouse$inHouseFrequency[1]<0.30]<-1
           criteria["BS1_supporting",1][is.na(criteria["BS1_supporting",1])]<-0
@@ -593,6 +714,12 @@ server <- function(input, output, session) {
         criteria[c("PS2_veryStrong", "PS2"),1][denovo_confirmed==1 & denovo_noconfirmed>=2]<-c(1,0)
         criteria[c("PS2_veryStrong", "PS2"),1][denovo_confirmed==1 & denovo_noconfirmed<2]<-c(0,1)
         criteria[c("PS2_veryStrong", "PS2"),1][denovo_confirmed==0]<-c(0,0)
+        
+        if (is.null(denovo_confirmed | is.null (input$denovo_confirmed) )) {
+          
+          ## nothing to do here
+          return(NULL)
+        }
         
         ###PM6  - de novo cases reported no confirmed
         
@@ -608,11 +735,29 @@ server <- function(input, output, session) {
         criteria[c("PP1_strong", "PP1_moderate", "PP1_supporting"),1][cosegregation==3|cosegregation==4]<-c(0,0,1)
         criteria[c("PP1_strong", "PP1_moderate", "PP1_supporting"),1][cosegregation<3]<-c(0,0,0)
         
+        if (is.null(cosegregation)) {
+          
+          ## nothing to do here
+          return(NULL)
+        }
+        
         ###PS3 - Functional studies
         criteria[c("PS3"),1]<-c(Functional_evidence[1])
         
+        if (is.null(Functional_evidence)) {
+          
+          ## nothing to do here
+          return(NULL)
+        }
+        
         ###PP5, BP6
         criteria[c("PP5", "BP6"),1]<-c(PPAT_evidence[1], PPOL_evidence[2])
+        
+        if (is.null(PPAT_evidence) | is.null (input$PPOL_evidence)) {
+          
+          ## nothing to do here
+          return(NULL)
+        }
         
     ACMG<-data.frame(AMGC=c("PS1", "PS2_veryStrong", "PS2", "PS3", "PS4_strong", "PS4_moderate", "PS4_supporting", "PM5_strong",  "PM6_veryStrong", "PM6","PM1", "PM2", "PM4",  "PP1_strong", "PP1_moderate", "PP1_supporting", "PP2", "PP3","PP5", "BA1", "BS1", "BS2", "BS3", "BS4", "BP1", "BP2", "BP3", "BP4", "BP5", "BP6", "BP7", "BS1_supporting", "PM6_strong", "PM5", "PM5_supporting", "BP8", "PVS1"))
     criteria <- cbind.data.frame(ACMG, criteria)
