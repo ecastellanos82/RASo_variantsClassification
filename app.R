@@ -1522,27 +1522,24 @@ server <- function(input, output, session) {
   #### AUTOMATIC VARIANT CLASSIFICATION
   
         
- #     AutomClass_reactive <-eventReactive(c(input$go, input$id, input$denovo_noconfirmed, input$denovo_confirmed, input$cosegregation,
-   #                                         input$PPAT_evidence,input$PPOL_evidence, input$Functional_evidence),
-   #                                       if (input$go == 0 | input$id == 0){
-    #                                        return(NULL)
-     #                                     }
-  #                                        else 
- #                                        {Automatic_criteria_AMCG(id = input$id, con = con, denovo_noconfirmed = input$denovo_noconfirmed,
-  #                                                            denovo_confirmed = input$denovo_confirmed, cosegregation = input$cosegregation,
-   #                                                           PPAT_evidence = as.numeric(as.character(input$PPAT_evidence)), 
-    #                                                          PPOL_evidence = as.numeric(as.character(input$PPOL_evidence)),
-     #                                                         Functional_evidence = as.numeric(as.character(input$Functional_evidence)))})
-  #
-    AutomClass_reactive <-eventReactive(c(input$go, input$id, input$denovo_noconfirmed, input$denovo_confirmed, input$cosegregation,
+      AutomClass_reactive <-eventReactive(c(input$go, input$id, input$denovo_noconfirmed, input$denovo_confirmed, input$cosegregation,
                                             input$PPAT_evidence,input$PPOL_evidence, input$Functional_evidence),
-                                                                                    {Automatic_criteria_AMCG(id = input$id, con = con, denovo_noconfirmed = input$denovo_noconfirmed,
-                                                                   denovo_confirmed = input$denovo_confirmed, cosegregation = input$cosegregation,
-                                                                   PPAT_evidence = as.numeric(as.character(input$PPAT_evidence)), 
-                                                                   PPOL_evidence = as.numeric(as.character(input$PPOL_evidence)),
-                                                                   Functional_evidence = as.numeric(as.character(input$Functional_evidence)))})
+                                          if (input$go == 0 | input$id == 0){
+                                            return(NULL)
+                                          }
+                                          else 
+                                          {Automatic_criteria_AMCG(id = input$id, con = con, denovo_noconfirmed = input$denovo_noconfirmed,
+                                                              denovo_confirmed = input$denovo_confirmed, cosegregation = input$cosegregation,
+                                                              PPAT_evidence = as.numeric(as.character(input$PPAT_evidence)), 
+                                                              PPOL_evidence = as.numeric(as.character(input$PPOL_evidence)),
+                                                              Functional_evidence = as.numeric(as.character(input$Functional_evidence)))})
       
-      criteria <- renderTable(expr = AutomClass_reactive(),rownames = FALSE, bordered = FALSE)
+      
+      criteria <-  renderTable(if (input$go == 0 | input$id == 0){
+        return(NULL)
+      }
+      else  
+      {expr = AutomClass_reactive()},rownames = FALSE, bordered = FALSE)
       output$AutoClass <- criteria
 
 
