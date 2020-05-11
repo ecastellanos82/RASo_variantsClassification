@@ -1535,11 +1535,7 @@ server <- function(input, output, session) {
                                                               Functional_evidence = as.numeric(as.character(input$Functional_evidence)))})
       
       
-      criteria <-  renderTable(if (input$go == 0 | input$id == 0){
-        return(NULL)
-      }
-      else  
-      {expr = AutomClass_reactive()},rownames = FALSE, bordered = FALSE)
+      criteria <-  renderTable(expr = AutomClass_reactive(),rownames = FALSE, bordered = FALSE)}
       output$AutoClass <- criteria
 
 
