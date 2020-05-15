@@ -1521,8 +1521,7 @@ server <- function(input, output, session) {
   
   #### AUTOMATIC VARIANT CLASSIFICATION
   
-        
-      AutomClass_reactive <-eventReactive(c(input$go, input$id, input$denovo_noconfirmed, input$denovo_confirmed, input$cosegregation,
+           AutomClass_reactive <-eventReactive(c(input$go, input$id, input$denovo_noconfirmed, input$denovo_confirmed, input$cosegregation,
                                             input$PPAT_evidence,input$PPOL_evidence, input$Functional_evidence),
                                           if (input$go == 0 | input$id == 0){
                                             return(NULL)
@@ -1535,7 +1534,7 @@ server <- function(input, output, session) {
                                                               Functional_evidence = as.numeric(as.character(input$Functional_evidence)))})
       
       
-      criteria <-  renderTable(expr = AutomClass_reactive(),rownames = FALSE, bordered = FALSE)}
+      criteria <-  renderTable(expr = AutomClass_reactive(),rownames = FALSE, bordered = FALSE)
       output$AutoClass <- criteria
 
 
